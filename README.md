@@ -7,7 +7,7 @@ Your coding agent writes a design doc, a comparison table, a research report —
 ```
 You:   "put this on the board"
 Agent: docket publish review.html
-         --type review --summary ...
+       --type review --summary …
 You:   read on your phone → archive
 ```
 
