@@ -5,9 +5,10 @@
 코딩 에이전트가 설계 문서, 비교 분석, 리서치 리포트를 만들어서 — 채팅창에 쏟아냅니다. 폰에서는 읽기 힘들고, 내일이면 스크롤 속으로 사라지죠. docketry는 에이전트에게 그 산출물을 제대로 된 웹페이지로 게시하는 명령 하나를 주고, 당신에게는 읽고·보관하고·버릴 수 있는 모바일 친화적인 받은함을 줍니다.
 
 ```
-나:       "board에 올려줘"
-에이전트:  docket publish design-review.html --type review --summary "3안 비교, 2안 권장"
-나:       폰에서 보드 열기 → 읽기 → 보관. 끝.
+나:  "board에 올려줘"
+AI:  docket publish review.html
+       --type review --summary "..."
+나:  폰에서 읽고 → 보관. 끝.
 ```
 
 [English README](README.md)
@@ -83,14 +84,12 @@ docketry의 핵심은 "board에 올려줘" 한 마디로 게시가 끝나는 것
 
 ## 설정
 
-| 환경변수 | 기본값 | 용도 |
-|---|---|---|
-| `DOCKET_TOKEN` | — (필수) | 게시/API 접근용 Bearer 토큰 |
-| `DOCKET_PIN` | — (필수) | UI 로그인 6자리 PIN (5회 실패 시 15분 잠금) |
-| `DOCKET_SESSION_SECRET` | — (필수) | 세션 쿠키·서명 URL용 HMAC 키 |
-| `DOCKET_DATA_DIR` | `./data/items` | 항목 저장 위치 |
-| `DOCKET_TRASH_TTL_DAYS` | `30` | 내장 스위퍼가 휴지통을 비우기까지의 일수 (`0`이면 비활성) |
-| `NEXT_PUBLIC_DOCKET_LOCALE` | `en` | UI 언어: `en` 또는 `ko` (빌드 타임) |
+- `DOCKET_TOKEN` (필수) — 게시/API 접근용 Bearer 토큰
+- `DOCKET_PIN` (필수) — UI 로그인 6자리 PIN. 5회 실패 시 15분 잠금
+- `DOCKET_SESSION_SECRET` (필수) — 세션 쿠키·서명 URL용 HMAC 키
+- `DOCKET_DATA_DIR` (기본 `./data/items`) — 항목 저장 위치
+- `DOCKET_TRASH_TTL_DAYS` (기본 `30`) — 내장 스위퍼가 휴지통을 비우기까지의 일수. `0`이면 비활성
+- `NEXT_PUBLIC_DOCKET_LOCALE` (기본 `en`) — UI 언어 `en`/`ko` (빌드 타임)
 
 ## 운영
 

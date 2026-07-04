@@ -5,9 +5,10 @@
 Your coding agent writes a design doc, a comparison table, a research report — and dumps it into the chat, where it's unreadable on your phone and lost in scrollback by tomorrow. docket gives agents one command to publish that deliverable as a real web page, and gives you a mobile-friendly inbox to read, archive, and delete them.
 
 ```
-You:    "put this on the board"
-Agent:  docket publish design-review.html --type review --summary "3 options compared, recommending #2"
-You:    open your board on your phone → read → archive. done.
+You:   "put this on the board"
+Agent: docket publish review.html
+         --type review --summary ...
+You:   read on your phone → archive
 ```
 
 [한국어 README](README.ko.md)
@@ -77,14 +78,12 @@ Each includes artifact quality rules (self-contained HTML, mobile-first, light/d
 
 ## Configuration
 
-| Env | Default | Purpose |
-|---|---|---|
-| `DOCKET_TOKEN` | — (required) | Bearer token for the publish/API access |
-| `DOCKET_PIN` | — (required) | 6-digit UI login (5 failures → 15 min lockout) |
-| `DOCKET_SESSION_SECRET` | — (required) | HMAC key for session cookies & signed URLs |
-| `DOCKET_DATA_DIR` | `./data/items` | Item storage location |
-| `DOCKET_TRASH_TTL_DAYS` | `30` | Days before the built-in sweeper purges trash (`0` disables it) |
-| `NEXT_PUBLIC_DOCKET_LOCALE` | `en` | UI language: `en` or `ko` (build-time) |
+- `DOCKET_TOKEN` (required) — bearer token for the publish API
+- `DOCKET_PIN` (required) — 6-digit UI login; 5 failures → 15 min lockout
+- `DOCKET_SESSION_SECRET` (required) — HMAC key for session cookies & signed URLs
+- `DOCKET_DATA_DIR` (default `./data/items`) — item storage location
+- `DOCKET_TRASH_TTL_DAYS` (default `30`) — days before the built-in sweeper purges trash; `0` disables it
+- `NEXT_PUBLIC_DOCKET_LOCALE` (default `en`) — UI language `en`/`ko` (build-time)
 
 ## Operating
 
