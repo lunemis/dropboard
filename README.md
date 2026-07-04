@@ -23,7 +23,7 @@ You:    open your board on your phone → read → archive. done.
 ## Quick start
 
 ```bash
-git clone <this repo> && cd docket
+git clone https://github.com/lunemis/docketry.git && cd docketry
 npm install
 
 cat > .env.local <<EOF
