@@ -38,12 +38,23 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
   ) {
     return NextResponse.json({ error: "invalid status" }, { status: 400 });
   }
+  const ttl = body.ttl_minutes;
+  if (
+    ttl !== undefined &&
+    (typeof ttl !== "number" || !Number.isFinite(ttl) || ttl < 1 || ttl > 10080)
+  ) {
+    return NextResponse.json(
+      { error: "ttl_minutes must be a number between 1 and 10080 (7 days)" },
+      { status: 400 },
+    );
+  }
 
   const item = await updateItem(id, {
     status: body.status as ItemStatus | undefined,
     pinned: typeof body.pinned === "boolean" ? body.pinned : undefined,
     read: typeof body.read === "boolean" ? body.read : undefined,
     keep: body.keep === true ? true : undefined,
+    ttl_minutes: ttl as number | undefined,
   });
   if (!item) return NextResponse.json({ error: "not found" }, { status: 404 });
   return NextResponse.json({ item });

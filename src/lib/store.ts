@@ -150,6 +150,8 @@ export interface UpdatePatch {
   read?: boolean;
   /** true → promote a temp item to keep (clears expires_at) */
   keep?: boolean;
+  /** set → (re)mark as temp, expiring this many minutes from now */
+  ttl_minutes?: number;
 }
 
 export async function updateItem(
@@ -167,6 +169,11 @@ export async function updateItem(
   if (patch.read === true && !meta.read_at) meta.read_at = now();
   if (patch.read === false) meta.read_at = null;
   if (patch.keep === true) meta.expires_at = null;
+  if (patch.ttl_minutes) {
+    meta.expires_at = new Date(
+      Date.now() + patch.ttl_minutes * 60000,
+    ).toISOString();
+  }
 
   meta.updated_at = now();
   await writeMeta(meta);
