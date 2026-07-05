@@ -19,6 +19,8 @@ export interface ItemMeta {
   pinned: boolean;
   read_at: string | null;
   trashed_at: string | null;
+  /** temp items only — item vanishes past this time; null/absent = keep */
+  expires_at?: string | null;
   created_at: string;
   updated_at: string;
   source: string;
@@ -33,4 +35,6 @@ export interface CreateItemInput {
   content: string;
   content_type?: ContentType;
   source?: string;
+  /** set → temp item expiring after this many minutes */
+  ttl_minutes?: number;
 }

@@ -43,6 +43,7 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
     status: body.status as ItemStatus | undefined,
     pinned: typeof body.pinned === "boolean" ? body.pinned : undefined,
     read: typeof body.read === "boolean" ? body.read : undefined,
+    keep: body.keep === true ? true : undefined,
   });
   if (!item) return NextResponse.json({ error: "not found" }, { status: 404 });
   return NextResponse.json({ item });

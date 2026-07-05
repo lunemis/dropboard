@@ -19,6 +19,9 @@ const STRINGS = {
     emptyTrash: "Trash is empty",
     trashNote: (d: number) => `Items are deleted permanently after ${d} days`,
     stamp: "DONE",
+    tempGroup: "Temporary",
+    actionKeep: "Keep",
+    toastKept: "Kept — moved to inbox",
     actionArchive: "Archive",
     actionToTrash: "Move to trash",
     actionToInbox: "Move to inbox",
@@ -61,6 +64,9 @@ const STRINGS = {
     emptyTrash: "휴지통이 비어 있습니다",
     trashNote: (d: number) => `휴지통의 항목은 ${d}일 후 자동으로 삭제됩니다`,
     stamp: "완",
+    tempGroup: "임시",
+    actionKeep: "남기기",
+    toastKept: "남겼습니다 — 받은함으로 이동",
     actionArchive: "보관",
     actionToTrash: "휴지통으로",
     actionToInbox: "받은함으로",
@@ -118,6 +124,17 @@ export const TYPE_LABELS: Record<
       ? { label: "재미", seal: "재" }
       : { label: "Fun", seal: "FUN" },
 };
+
+/** Time remaining until an expiry timestamp, compact (e.g. "1h 50m"). */
+export function remainTime(iso: string): string {
+  const ms = new Date(iso).getTime() - Date.now();
+  if (ms <= 0) return LOCALE === "ko" ? "곧 삭제" : "expiring";
+  const min = Math.ceil(ms / 60000);
+  if (min < 60) return `${min}m`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `${h}h ${min % 60}m`;
+  return `${Math.floor(h / 24)}d ${h % 24}h`;
+}
 
 /** Relative time, localized. */
 export function relTime(iso: string): string {

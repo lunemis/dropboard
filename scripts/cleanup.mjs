@@ -31,9 +31,14 @@ for (const id of entries) {
   } catch {
     continue;
   }
-  if (meta.status !== "trash" || !meta.trashed_at) continue;
-  if (new Date(meta.trashed_at).getTime() > cutoff) {
-    kept++;
+  const expiredTemp =
+    meta.expires_at && new Date(meta.expires_at).getTime() <= Date.now();
+  const staleTrash =
+    meta.status === "trash" &&
+    meta.trashed_at &&
+    new Date(meta.trashed_at).getTime() <= cutoff;
+  if (!expiredTemp && !staleTrash) {
+    if (meta.status === "trash" || meta.expires_at) kept++;
     continue;
   }
   if (!dry) {

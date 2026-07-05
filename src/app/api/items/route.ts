@@ -78,6 +78,16 @@ export async function POST(req: NextRequest) {
       { status: 400 },
     );
   }
+  const ttl = body.ttl_minutes;
+  if (
+    ttl !== undefined &&
+    (typeof ttl !== "number" || !Number.isFinite(ttl) || ttl < 1 || ttl > 10080)
+  ) {
+    return NextResponse.json(
+      { error: "ttl_minutes must be a number between 1 and 10080 (7 days)" },
+      { status: 400 },
+    );
+  }
 
   const item = await createItem({
     title,
@@ -94,6 +104,7 @@ export async function POST(req: NextRequest) {
     summary:
       typeof body.summary === "string" ? body.summary.slice(0, 500) : undefined,
     source: typeof body.source === "string" ? body.source : undefined,
+    ttl_minutes: ttl as number | undefined,
   });
 
   return NextResponse.json({ item, url: `/i/${item.id}` }, { status: 201 });

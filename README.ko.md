@@ -64,6 +64,8 @@ docket list [--status inbox|archived|trash]
 
 `.md`/`.markdown` 파일은 내장 문서 템플릿으로 렌더링되고, 그 외에는 그대로 서빙됩니다. 제목을 생략하면 `<title>`/`<h1>`/첫 `#` 헤딩에서 자동으로 뽑습니다.
 
+**휘발성 항목**: `--temp`로 게시하면 스스로 사라지는 항목이 됩니다(기본 2시간, `--temp 30m` / `--temp 1d`) — "이거 그냥 HTML로 보여줘" 용도에 딱 맞습니다. temp 항목은 받은함 상단 *임시* 그룹에 남은 시간과 함께 표시되고, **남기기**를 한 번 누르면 일반 항목으로 승격되며, 아니면 알아서 사라집니다.
+
 REST로 직접 호출할 수도 있습니다:
 
 ```bash
@@ -88,7 +90,7 @@ docketry의 핵심은 "board에 올려줘" 한 마디로 게시가 끝나는 것
 - `DOCKET_PIN` (필수) — UI 로그인 6자리 PIN. 5회 실패 시 15분 잠금
 - `DOCKET_SESSION_SECRET` (필수) — 세션 쿠키·서명 URL용 HMAC 키
 - `DOCKET_DATA_DIR` (기본 `./data/items`) — 항목 저장 위치
-- `DOCKET_TRASH_TTL_DAYS` (기본 `30`) — 내장 스위퍼가 휴지통을 비우기까지의 일수. `0`이면 비활성
+- `DOCKET_TRASH_TTL_DAYS` (기본 `30`) — 내장 스위퍼가 휴지통을 비우기까지의 일수. `0`이면 휴지통 정리만 건너뜀 (만료된 temp 항목은 항상 정리)
 - `NEXT_PUBLIC_DOCKET_LOCALE` (기본 `en`) — UI 언어 `en`/`ko` (빌드 타임)
 
 ## 운영

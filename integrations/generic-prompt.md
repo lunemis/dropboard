@@ -14,7 +14,9 @@ deliverable to my docket review board:
    - Markdown for plain notes/checklists/summaries
 2. Publish it:
    docket publish <file> --type <review|decision|report|info|fun> \
-     --summary "<what it is + what I should do>" [--project <slug>] [--tags a,b]
+     --summary "<what it is + what I should do>" [--project <slug>] [--tags a,b] [--temp]
+   Use --temp (auto-deletes in 2h) when I just asked to *see* something as HTML;
+   omit it for documents worth keeping.
    (Without the CLI: POST {URL}/api/items with header "Authorization: Bearer <token>"
    and JSON body {title, type, summary, content, content_type: "html"|"markdown"}.
    Read url/token from ~/.config/docket/config.json.)

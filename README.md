@@ -58,6 +58,8 @@ docket list [--status inbox|archived|trash]
 
 `.md`/`.markdown` files are rendered with the built-in document template; everything else is served as-is. Titles are auto-derived from `<title>`/`<h1>`/first `#` heading.
 
+**Ephemeral items**: `--temp` publishes a self-destructing item (2h by default, or `--temp 30m` / `--temp 1d`) — perfect for "just show me this as HTML". Temp items sit in a *Temporary* group at the top of the inbox with a countdown; one tap on **Keep** promotes them to a regular item, otherwise they vanish on their own.
+
 Or REST, from anything:
 
 ```bash
@@ -82,7 +84,7 @@ Each includes artifact quality rules (self-contained HTML, mobile-first, light/d
 - `DOCKET_PIN` (required) — 6-digit UI login; 5 failures → 15 min lockout
 - `DOCKET_SESSION_SECRET` (required) — HMAC key for session cookies & signed URLs
 - `DOCKET_DATA_DIR` (default `./data/items`) — item storage location
-- `DOCKET_TRASH_TTL_DAYS` (default `30`) — days before the built-in sweeper purges trash; `0` disables it
+- `DOCKET_TRASH_TTL_DAYS` (default `30`) — days before the built-in sweeper purges trash; `0` skips the trash purge (expired temp items are always swept)
 - `NEXT_PUBLIC_DOCKET_LOCALE` (default `en`) — UI language `en`/`ko` (build-time)
 
 ## Operating

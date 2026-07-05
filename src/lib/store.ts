@@ -43,6 +43,13 @@ export interface ListFilter {
   q?: string;
 }
 
+export function isExpired(meta: ItemMeta): boolean {
+  return (
+    Boolean(meta.expires_at) &&
+    new Date(meta.expires_at!).getTime() <= Date.now()
+  );
+}
+
 export async function listItems(filter: ListFilter): Promise<ItemMeta[]> {
   let entries: string[];
   try {
@@ -52,7 +59,7 @@ export async function listItems(filter: ListFilter): Promise<ItemMeta[]> {
   }
   const metas = (
     await Promise.all(entries.filter(isValidId).map(readMeta))
-  ).filter((m): m is ItemMeta => m !== null);
+  ).filter((m): m is ItemMeta => m !== null && !isExpired(m));
 
   let out = metas;
   if (filter.status) out = out.filter((m) => m.status === filter.status);
@@ -77,7 +84,8 @@ export async function listItems(filter: ListFilter): Promise<ItemMeta[]> {
 
 export async function getItem(id: string): Promise<ItemMeta | null> {
   if (!isValidId(id)) return null;
-  return readMeta(id);
+  const meta = await readMeta(id);
+  return meta && !isExpired(meta) ? meta : null;
 }
 
 function makeId(date: Date): string {
@@ -123,6 +131,9 @@ export async function createItem(input: CreateItemInput): Promise<ItemMeta> {
     pinned: false,
     read_at: null,
     trashed_at: null,
+    expires_at: input.ttl_minutes
+      ? new Date(Date.now() + input.ttl_minutes * 60000).toISOString()
+      : null,
     created_at: ts,
     updated_at: ts,
     source: input.source ?? "unknown",
@@ -137,6 +148,8 @@ export interface UpdatePatch {
   status?: ItemStatus;
   pinned?: boolean;
   read?: boolean;
+  /** true → promote a temp item to keep (clears expires_at) */
+  keep?: boolean;
 }
 
 export async function updateItem(
@@ -153,6 +166,7 @@ export async function updateItem(
   if (typeof patch.pinned === "boolean") meta.pinned = patch.pinned;
   if (patch.read === true && !meta.read_at) meta.read_at = now();
   if (patch.read === false) meta.read_at = null;
+  if (patch.keep === true) meta.expires_at = null;
 
   meta.updated_at = now();
   await writeMeta(meta);
@@ -167,9 +181,14 @@ export async function deleteItem(id: string): Promise<boolean> {
   return true;
 }
 
-/** Purge trashed items older than ttlDays. Used by the built-in sweeper. */
-export async function sweepTrash(ttlDays: number): Promise<{ removed: number }> {
-  const cutoff = Date.now() - ttlDays * 86400_000;
+/**
+ * Physically remove expired temp items, plus trashed items older than
+ * trashTtlDays (0 skips the trash purge). Used by the built-in sweeper.
+ */
+export async function sweepStorage(
+  trashTtlDays: number,
+): Promise<{ removed: number }> {
+  const trashCutoff = Date.now() - trashTtlDays * 86400_000;
   let entries: string[] = [];
   try {
     entries = await fs.readdir(DATA_DIR);
@@ -179,8 +198,14 @@ export async function sweepTrash(ttlDays: number): Promise<{ removed: number }> 
   let removed = 0;
   for (const id of entries.filter(isValidId)) {
     const meta = await readMeta(id);
-    if (!meta || meta.status !== "trash" || !meta.trashed_at) continue;
-    if (new Date(meta.trashed_at).getTime() > cutoff) continue;
+    if (!meta) continue;
+    const expiredTemp = isExpired(meta);
+    const staleTrash =
+      trashTtlDays > 0 &&
+      meta.status === "trash" &&
+      Boolean(meta.trashed_at) &&
+      new Date(meta.trashed_at!).getTime() <= trashCutoff;
+    if (!expiredTemp && !staleTrash) continue;
     await fs.rm(itemDir(id), { recursive: true, force: true });
     removed++;
   }

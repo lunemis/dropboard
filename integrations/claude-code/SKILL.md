@@ -9,6 +9,19 @@ docket is the user's personal review board. Publish conversation deliverables as
 self-contained web pages; the user reviews them on the board (including on mobile)
 and archives/deletes them there.
 
+## Pick the mode first
+
+Infer **retention** and **polish level** from the user's phrasing:
+
+| Phrasing | Mode |
+|---|---|
+| "show me this as HTML", "let me see it in the browser" | **temp**: add `--temp` (auto-deletes in 2h). Minimal styling — just make the content readable |
+| "put this on the board", "publish for review" | **keep**: review-optimized page, type review/decision |
+| "write this up as a document" | **keep + formal doc**: structured (sections/tables), type report/info |
+
+Temp items appear in a "Temporary" group at the top of the inbox; the user can
+press Keep to retain one. When unsure, publish as keep — deleting is easy.
+
 ## Procedure
 
 1. **Produce the artifact** as a file in a temp directory:
@@ -18,7 +31,8 @@ and archives/deletes them there.
 2. **Publish**:
    ```bash
    docket publish <file> --type <type> --project <project-slug> \
-     --summary "<one-line summary>" --tags a,b --source <agent-name>
+     --summary "<one-line summary>" --tags a,b --source <agent-name> \
+     [--temp]   # temp mode only; custom duration: --temp 30m / --temp 1d
    ```
    - If `--title` is omitted it is derived from `<title>`/`<h1>`/first `#` heading —
      make sure one of them exists.

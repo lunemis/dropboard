@@ -5,10 +5,11 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   ArchiveIcon,
+  KeepIcon,
   RestoreIcon,
   TrashIcon,
 } from "../../../components/Board";
-import { t } from "../../../lib/i18n";
+import { remainTime, t } from "../../../lib/i18n";
 import type { ItemMeta, ItemStatus } from "../../../lib/types";
 
 const LIST_PATH: Record<ItemStatus, string> = {
@@ -23,6 +24,7 @@ export default function ViewerPage() {
   const [meta, setMeta] = useState<ItemMeta | null>(null);
   const [rawUrl, setRawUrl] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [confirming, setConfirming] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -76,6 +78,21 @@ export default function ViewerPage() {
     router.push(LIST_PATH[meta.status]);
   };
 
+  const keepItem = async () => {
+    const item = await patch({ keep: true });
+    if (item) setMeta(item);
+  };
+
+  const destroyTemp = async () => {
+    if (!confirming) {
+      setConfirming(true);
+      setTimeout(() => setConfirming(false), 3000);
+      return;
+    }
+    await fetch(`/api/items/${id}`, { method: "DELETE" });
+    router.push("/");
+  };
+
   if (notFound) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3">
@@ -104,7 +121,39 @@ export default function ViewerPage() {
         <h1 className="min-w-0 flex-1 truncate text-sm font-semibold">
           {meta?.title ?? ""}
         </h1>
-        {meta && (
+        {meta && meta.expires_at && (
+          <div className="flex shrink-0 items-center gap-1">
+            <span className="font-mono text-[11px] text-[var(--accent)]">
+              ⏳ {remainTime(meta.expires_at)}
+            </span>
+            <button
+              aria-label={t.actionKeep}
+              title={t.actionKeep}
+              onClick={keepItem}
+              className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--muted)] active:bg-[var(--surface-2)]"
+            >
+              <KeepIcon />
+            </button>
+            {confirming ? (
+              <button
+                onClick={destroyTemp}
+                className="flex h-11 items-center justify-center rounded-full bg-[var(--accent)] px-3 text-xs font-semibold text-white"
+              >
+                {t.actionConfirm}
+              </button>
+            ) : (
+              <button
+                aria-label={t.actionDelete}
+                title={t.actionDelete}
+                onClick={destroyTemp}
+                className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--muted)] active:bg-[var(--surface-2)]"
+              >
+                <TrashIcon />
+              </button>
+            )}
+          </div>
+        )}
+        {meta && !meta.expires_at && (
           <div className="flex shrink-0 items-center">
             <button
               aria-label={meta.pinned ? t.unpin : t.pin}

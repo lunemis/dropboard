@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { relTime, t, TYPE_LABELS } from "../lib/i18n";
+import { relTime, remainTime, t, TYPE_LABELS } from "../lib/i18n";
 import type { ItemMeta, ItemStatus, ItemType } from "../lib/types";
 import { TypeSeal } from "./TypeSeal";
 
@@ -90,6 +90,23 @@ export default function Board({ status }: { status: ItemStatus }) {
     [load, showToast],
   );
 
+  const keep = useCallback(
+    async (item: ItemMeta) => {
+      const res = await fetch(`/api/items/${item.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ keep: true }),
+      });
+      if (!res.ok) {
+        showToast({ msg: t.toastFailed });
+        return;
+      }
+      showToast({ msg: t.toastKept });
+      load();
+    },
+    [load, showToast],
+  );
+
   const destroy = useCallback(
     async (item: ItemMeta) => {
       if (confirmingId !== item.id) {
@@ -111,14 +128,128 @@ export default function Board({ status }: { status: ItemStatus }) {
     [confirmingId, load, showToast],
   );
 
+  const now = Date.now();
   const visible =
     items?.filter(
       (i) =>
         (typeFilter === "all" || i.type === typeFilter) &&
-        matchesQuery(i, query),
+        matchesQuery(i, query) &&
+        (!i.expires_at || new Date(i.expires_at).getTime() > now),
     ) ?? null;
+  const temps = visible?.filter((i) => i.expires_at) ?? [];
+  const regular = visible?.filter((i) => !i.expires_at) ?? [];
   const unreadCount =
     status === "inbox" ? (items?.filter((i) => !i.read_at).length ?? 0) : 0;
+
+  const card = (item: ItemMeta) => (
+    <li key={item.id}>
+      <div className="flex items-stretch gap-1 rounded-xl bg-[var(--surface)] p-3">
+        <Link
+          href={`/i/${item.id}`}
+          className="flex min-w-0 flex-1 items-start gap-3"
+        >
+          <TypeSeal type={item.type} temp={Boolean(item.expires_at)} />
+          <div className="min-w-0 flex-1">
+            <h2
+              className={`line-clamp-2 text-[15px] leading-snug ${
+                !item.read_at && status === "inbox"
+                  ? "font-semibold"
+                  : "font-medium"
+              }`}
+            >
+              {!item.read_at && status === "inbox" && (
+                <span
+                  aria-label={t.unreadDot}
+                  className="mr-1.5 inline-block h-2 w-2 rounded-full bg-[var(--accent)] align-middle"
+                />
+              )}
+              {item.pinned && (
+                <span className="mr-1 text-[var(--accent)]">📌</span>
+              )}
+              {item.title}
+            </h2>
+            {item.summary && (
+              <p className="mt-0.5 line-clamp-2 text-[13px] leading-snug text-[var(--muted)]">
+                {item.summary}
+              </p>
+            )}
+            <p className="mt-1 font-mono text-[11px] text-[var(--muted)]">
+              {item.expires_at && (
+                <span className="text-[var(--accent)]">
+                  ⏳ {remainTime(item.expires_at)}
+                  {" · "}
+                </span>
+              )}
+              {item.project ? `${item.project} · ` : ""}
+              {relTime(item.created_at)}
+            </p>
+          </div>
+        </Link>
+        <div className="flex flex-col justify-center">
+          {item.expires_at ? (
+            <>
+              <IconBtn label={t.actionKeep} onClick={() => keep(item)}>
+                <KeepIcon />
+              </IconBtn>
+              {confirmingId === item.id ? (
+                <ConfirmBtn onClick={() => destroy(item)} />
+              ) : (
+                <IconBtn label={t.actionDelete} onClick={() => destroy(item)}>
+                  <TrashIcon />
+                </IconBtn>
+              )}
+            </>
+          ) : status === "inbox" ? (
+            <>
+              <IconBtn
+                label={t.actionArchive}
+                onClick={() => move(item, "archived", t.toastArchived)}
+              >
+                <ArchiveIcon />
+              </IconBtn>
+              <IconBtn
+                label={t.actionToTrash}
+                onClick={() => move(item, "trash", t.toastTrashed)}
+              >
+                <TrashIcon />
+              </IconBtn>
+            </>
+          ) : status === "archived" ? (
+            <>
+              <IconBtn
+                label={t.actionToInbox}
+                onClick={() => move(item, "inbox", t.toastToInbox)}
+              >
+                <RestoreIcon />
+              </IconBtn>
+              <IconBtn
+                label={t.actionToTrash}
+                onClick={() => move(item, "trash", t.toastTrashed)}
+              >
+                <TrashIcon />
+              </IconBtn>
+            </>
+          ) : (
+            <>
+              <IconBtn
+                label={t.actionRestore}
+                onClick={() => move(item, "inbox", t.toastRestored)}
+              >
+                <RestoreIcon />
+              </IconBtn>
+              {confirmingId === item.id ? (
+                <ConfirmBtn onClick={() => destroy(item)} />
+              ) : (
+                <IconBtn label={t.actionDelete} onClick={() => destroy(item)}>
+                  <TrashIcon />
+                </IconBtn>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </li>
+  );
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-1 flex-col">
@@ -203,108 +334,20 @@ export default function Board({ status }: { status: ItemStatus }) {
         ) : visible.length === 0 ? (
           <EmptyState status={status} filtered={Boolean(items?.length)} />
         ) : (
-          <ul className="flex flex-col gap-2 pt-1">
-            {visible.map((item) => (
-              <li key={item.id}>
-                <div className="flex items-stretch gap-1 rounded-xl bg-[var(--surface)] p-3">
-                  <Link
-                    href={`/i/${item.id}`}
-                    className="flex min-w-0 flex-1 items-start gap-3"
-                  >
-                    <TypeSeal type={item.type} />
-                    <div className="min-w-0 flex-1">
-                      <h2
-                        className={`line-clamp-2 text-[15px] leading-snug ${
-                          !item.read_at && status === "inbox"
-                            ? "font-semibold"
-                            : "font-medium"
-                        }`}
-                      >
-                        {!item.read_at && status === "inbox" && (
-                          <span
-                            aria-label={t.unreadDot}
-                            className="mr-1.5 inline-block h-2 w-2 rounded-full bg-[var(--accent)] align-middle"
-                          />
-                        )}
-                        {item.pinned && (
-                          <span className="mr-1 text-[var(--accent)]">📌</span>
-                        )}
-                        {item.title}
-                      </h2>
-                      {item.summary && (
-                        <p className="mt-0.5 line-clamp-2 text-[13px] leading-snug text-[var(--muted)]">
-                          {item.summary}
-                        </p>
-                      )}
-                      <p className="mt-1 font-mono text-[11px] text-[var(--muted)]">
-                        {item.project ? `${item.project} · ` : ""}
-                        {relTime(item.created_at)}
-                      </p>
-                    </div>
-                  </Link>
-                  <div className="flex flex-col justify-center">
-                    {status === "inbox" && (
-                      <>
-                        <IconBtn
-                          label={t.actionArchive}
-                          onClick={() => move(item, "archived", t.toastArchived)}
-                        >
-                          <ArchiveIcon />
-                        </IconBtn>
-                        <IconBtn
-                          label={t.actionToTrash}
-                          onClick={() => move(item, "trash", t.toastTrashed)}
-                        >
-                          <TrashIcon />
-                        </IconBtn>
-                      </>
-                    )}
-                    {status === "archived" && (
-                      <>
-                        <IconBtn
-                          label={t.actionToInbox}
-                          onClick={() => move(item, "inbox", t.toastToInbox)}
-                        >
-                          <RestoreIcon />
-                        </IconBtn>
-                        <IconBtn
-                          label={t.actionToTrash}
-                          onClick={() => move(item, "trash", t.toastTrashed)}
-                        >
-                          <TrashIcon />
-                        </IconBtn>
-                      </>
-                    )}
-                    {status === "trash" && (
-                      <>
-                        <IconBtn
-                          label={t.actionRestore}
-                          onClick={() => move(item, "inbox", t.toastRestored)}
-                        >
-                          <RestoreIcon />
-                        </IconBtn>
-                        {confirmingId === item.id ? (
-                          <button
-                            onClick={() => destroy(item)}
-                            className="flex h-11 items-center justify-center rounded-full bg-[var(--accent)] px-2 text-xs font-semibold text-white"
-                          >
-                            {t.actionConfirm}
-                          </button>
-                        ) : (
-                          <IconBtn
-                            label={t.actionDelete}
-                            onClick={() => destroy(item)}
-                          >
-                            <TrashIcon />
-                          </IconBtn>
-                        )}
-                      </>
-                    )}
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
+          <div className="flex flex-col gap-2 pt-1">
+            {temps.length > 0 && (
+              <>
+                <p className="mt-1 px-1 font-mono text-[11px] font-semibold tracking-wide text-[var(--muted)] uppercase">
+                  {t.tempGroup}
+                </p>
+                <ul className="flex flex-col gap-2">{temps.map(card)}</ul>
+                {regular.length > 0 && (
+                  <div className="mt-2 border-t border-[var(--line)]" />
+                )}
+              </>
+            )}
+            <ul className="flex flex-col gap-2">{regular.map(card)}</ul>
+          </div>
         )}
       </main>
 
@@ -324,6 +367,17 @@ export default function Board({ status }: { status: ItemStatus }) {
         </div>
       )}
     </div>
+  );
+}
+
+function ConfirmBtn({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex h-11 items-center justify-center rounded-full bg-[var(--accent)] px-2 text-xs font-semibold text-white"
+    >
+      {t.actionConfirm}
+    </button>
   );
 }
 
@@ -435,6 +489,14 @@ export function RestoreIcon() {
       <rect x="3" y="4" width="18" height="4" rx="1" />
       <path d="M12 17v-5" />
       <path d="m9.5 14 2.5-2.5L14.5 14" />
+    </svg>
+  );
+}
+
+export function KeepIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16l-6-3.5L6 21Z" />
     </svg>
   );
 }

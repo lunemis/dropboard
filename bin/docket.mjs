@@ -104,6 +104,16 @@ async function publish(argv) {
   if (flags.project) body.project = flags.project;
   if (flags.summary) body.summary = flags.summary;
   if (flags.tags) body.tags = flags.tags.split(",").map((t) => t.trim()).filter(Boolean);
+  if ("temp" in flags) {
+    if (!flags.temp) {
+      body.ttl_minutes = 120; // default: 2h
+    } else {
+      const m = flags.temp.match(/^(\d+)([mhd])$/);
+      if (!m) die("--temp expects a duration like 30m, 2h, 1d");
+      const mult = { m: 1, h: 60, d: 1440 }[m[2]];
+      body.ttl_minutes = Number(m[1]) * mult;
+    }
+  }
 
   let res;
   try {
@@ -161,6 +171,7 @@ else {
 
 commands:
   docket publish <file> [--title T] [--type ${TYPES.join("|")}]
+                        [--temp [30m|2h|1d]]   # ephemeral: auto-deletes (default 2h)
                         [--project P] [--summary S] [--tags a,b] [--server URL]
   docket list [--status inbox|archived|trash]
 

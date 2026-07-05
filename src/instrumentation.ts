@@ -1,30 +1,29 @@
 /**
- * Built-in trash sweeper — runs inside the server process so no external
- * cron/scheduler is needed. Set DOCKET_TRASH_TTL_DAYS=0 to disable
- * (e.g. when you prefer an external `npm run cleanup` schedule).
+ * Built-in storage sweeper — runs inside the server process so no external
+ * cron/scheduler is needed. Purges expired temp items (always) and trashed
+ * items older than DOCKET_TRASH_TTL_DAYS (0 skips the trash purge).
  */
-const SWEEP_INTERVAL_MS = 6 * 60 * 60 * 1000;
+const SWEEP_INTERVAL_MS = 15 * 60 * 1000;
 const FIRST_SWEEP_DELAY_MS = 30 * 1000;
 
 export async function register() {
   if (process.env.NEXT_RUNTIME !== "nodejs") return;
-  const ttl = Number(process.env.DOCKET_TRASH_TTL_DAYS ?? 30);
-  if (!(ttl > 0)) return;
+  const trashTtl = Number(process.env.DOCKET_TRASH_TTL_DAYS ?? 30);
 
-  const { sweepTrash } = await import("./lib/store");
+  const { sweepStorage } = await import("./lib/store");
   const sweep = async () => {
     try {
-      const { removed } = await sweepTrash(ttl);
+      const { removed } = await sweepStorage(trashTtl > 0 ? trashTtl : 0);
       if (removed > 0) {
-        console.log(
-          `[docket] trash sweep: purged ${removed} item(s) (ttl ${ttl}d)`,
-        );
+        console.log(`[docket] sweep: purged ${removed} item(s)`);
       }
     } catch (err) {
-      console.error("[docket] trash sweep failed:", err);
+      console.error("[docket] sweep failed:", err);
     }
   };
   setTimeout(sweep, FIRST_SWEEP_DELAY_MS);
   setInterval(sweep, SWEEP_INTERVAL_MS);
-  console.log(`[docket] trash sweeper armed (ttl ${ttl}d, every 6h)`);
+  console.log(
+    `[docket] sweeper armed (every 15m; temp expiry + trash ttl ${trashTtl}d)`,
+  );
 }
