@@ -13,10 +13,12 @@ Agent: docket publish out.html
 You:   read on phone → archive
 ```
 
+![Inbox on desktop — stamp-seal type badges, unread dots, and a Temporary group with countdowns](docs/screenshots/desktop-inbox.png)
+
 <p align="center">
-  <img src="docs/screenshots/shot-inbox.png" width="260" alt="Inbox — stamp-seal type badges, unread dots, and a Temporary group with countdowns" />
-  <img src="docs/screenshots/shot-viewer.png" width="260" alt="Viewer — full-fidelity artifact rendering in a sandboxed iframe" />
-  <img src="docs/screenshots/shot-login.png" width="260" alt="PIN login" />
+  <img src="docs/screenshots/shot-inbox.png" width="230" alt="Inbox on mobile" />
+  <img src="docs/screenshots/shot-viewer.png" width="230" alt="Reviewing a deliverable — full-fidelity rendering in a sandboxed viewer" />
+  <img src="docs/screenshots/shot-login.png" width="230" alt="PIN login" />
 </p>
 
 [한국어 README](README.ko.md)
@@ -26,6 +28,10 @@ You:   read on phone → archive
 1. **Agents publish.** One CLI call (or a REST POST) turns any HTML or Markdown into a board item with a type seal, one-line summary, and project tag. Ready-made skill files make "put this on the board" just work in Claude Code, Codex, or any agent.
 2. **You review.** A mobile-first inbox with unread marks, search, and type filters. Items render full-fidelity — interactive charts and inline JS included — inside a sandboxed viewer.
 3. **Nothing piles up.** Archive or trash with undo. And when you just wanted to *see* something, agents publish it as **ephemeral**: it sits in a Temporary group with a countdown and deletes itself in 2 hours — unless you tap Keep.
+
+## Why the name?
+
+A **docket** is the queue of cases waiting to be heard in court — each one summarized, stamped, and scheduled for review. That's exactly what your agents produce all day: deliverables waiting for your judgment. docketry is where they get filed; the stamp-seal badges in the UI carry the same metaphor, and the CLI is simply `docket`.
 
 ## Why docketry
 

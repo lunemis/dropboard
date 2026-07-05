@@ -13,10 +13,12 @@ AI:  docket publish out.html
 나:  폰에서 읽고 → 보관. 끝.
 ```
 
+![데스크톱 받은함 — 도장 뱃지, 미읽음 표시, 카운트다운이 있는 임시 그룹](docs/screenshots/desktop-inbox.png)
+
 <p align="center">
-  <img src="docs/screenshots/shot-inbox.png" width="260" alt="받은함 — 도장 뱃지, 미읽음 표시, 카운트다운이 있는 임시 그룹" />
-  <img src="docs/screenshots/shot-viewer.png" width="260" alt="뷰어 — sandbox iframe 안에서 산출물 원본 렌더링" />
-  <img src="docs/screenshots/shot-login.png" width="260" alt="PIN 로그인" />
+  <img src="docs/screenshots/shot-inbox.png" width="230" alt="모바일 받은함" />
+  <img src="docs/screenshots/shot-viewer.png" width="230" alt="산출물 리뷰 — 격리된 뷰어에서 원본 그대로 렌더링" />
+  <img src="docs/screenshots/shot-login.png" width="230" alt="PIN 로그인" />
 </p>
 
 [English README](README.md)
@@ -26,6 +28,10 @@ AI:  docket publish out.html
 1. **에이전트가 게시합니다.** CLI 한 줄(또는 REST POST)로 HTML/Markdown이 유형 도장·요약·프로젝트 태그가 붙은 보드 항목이 됩니다. 동봉된 스킬 파일로 Claude Code든 Codex든 "board에 올려줘"가 바로 동작합니다.
 2. **당신은 리뷰합니다.** 미읽음·검색·유형 필터가 있는 모바일 퍼스트 받은함. 인터랙티브 차트와 인라인 JS까지 원본 그대로, 격리된 뷰어에서 렌더링됩니다.
 3. **쌓이지 않습니다.** 보관/휴지통엔 실행취소가 있고, "그냥 보여줘" 용도는 **휘발성**으로 게시됩니다 — 임시 그룹에서 카운트다운이 돌다가 2시간 뒤 스스로 사라집니다. 남기기 한 번이면 보존되고요.
+
+## 이름의 유래
+
+**docket**은 법정에서 심리를 기다리는 안건 목록입니다 — 안건마다 요약이 붙고, 도장이 찍히고, 검토 순서를 기다리죠. 에이전트가 하루 종일 만들어내는 것이 정확히 그렇습니다: 당신의 판단을 기다리는 산출물들. docketry는 그것들이 접수되는 곳이고, UI의 도장 뱃지도 같은 은유입니다. 그래서 CLI 명령도 `docket`입니다.
 
 ## 왜 docketry인가
 
