@@ -2,7 +2,9 @@
 
 **A self-hosted review board for AI-generated deliverables.**
 
-Your coding agent writes a design doc, a comparison table, a research report — and dumps it into the chat, where it's unreadable on your phone and lost in scrollback by tomorrow. docket gives agents one command to publish that deliverable as a real web page, and gives you a mobile-friendly inbox to read, archive, and delete them.
+![MIT license](https://img.shields.io/badge/license-MIT-2ea44f) ![Works with any agent](https://img.shields.io/badge/agents-Claude%20Code%20·%20Codex%20·%20any-5b7db1) ![No database](https://img.shields.io/badge/database-none-c2472f)
+
+Your coding agent writes a design doc, a comparison table, a research report — and dumps it into the chat, where it's unreadable on your phone and lost in scrollback by tomorrow. docketry gives agents one command to publish that deliverable as a real web page, and gives you a mobile-friendly inbox to read, keep, or let expire.
 
 ```
 You:   "put this on the board"
@@ -11,12 +13,25 @@ Agent: docket publish review.html
 You:   read on your phone → archive
 ```
 
+<p align="center">
+  <img src="docs/screenshots/shot-inbox.png" width="260" alt="Inbox — stamp-seal type badges, unread dots, and a Temporary group with countdowns" />
+  <img src="docs/screenshots/shot-viewer.png" width="260" alt="Viewer — full-fidelity artifact rendering in a sandboxed iframe" />
+  <img src="docs/screenshots/shot-login.png" width="260" alt="PIN login" />
+</p>
+
 [한국어 README](README.ko.md)
 
-## Why docket
+## How it works
+
+1. **Agents publish.** One CLI call (or a REST POST) turns any HTML or Markdown into a board item with a type seal, one-line summary, and project tag. Ready-made skill files make "put this on the board" just work in Claude Code, Codex, or any agent.
+2. **You review.** A mobile-first inbox with unread marks, search, and type filters. Items render full-fidelity — interactive charts and inline JS included — inside a sandboxed viewer.
+3. **Nothing piles up.** Archive or trash with undo. And when you just wanted to *see* something, agents publish it as **ephemeral**: it sits in a Temporary group with a countdown and deletes itself in 2 hours — unless you tap Keep.
+
+## Why docketry
 
 - **Agent-agnostic.** Anything that can run a CLI or hit a REST endpoint can publish: Claude Code, Codex, Cursor, aider, your own scripts. Ready-made skill/prompt files are included in [`integrations/`](integrations/).
-- **Built for review, not chat.** An inbox with unread markers, type badges (review / decision / report / info / fun), pinning, archive and trash with undo — the lifecycle a deliverable actually has. Chat transcripts and vendor artifact panes have none of this.
+- **Built for review, not chat.** An inbox with unread markers, type seals (review / decision / report / info / fun), pinning, archive and trash with undo — the lifecycle a deliverable actually has. Chat transcripts and vendor artifact panes have none of this.
+- **Ephemeral when you want it.** `--temp` items expire on their own (default 2h) — "just show me this as HTML" stops polluting your inbox, and one tap keeps the ones worth saving.
 - **Self-hosted and private.** Your deliverables never leave your machine. PIN login for the UI, bearer token for the publish API, and every artifact renders inside a sandboxed iframe with a CSP — AI-generated JS can't touch your session.
 - **Zero infrastructure.** No database. Each item is a folder: `meta.json` + one HTML/Markdown file. Backup is `cp -r`, search is `grep`, migration is `mv`. The only runtime dependency is a markdown renderer.
 - **Full-fidelity artifacts.** Agents can publish quick markdown notes (rendered with a clean document template) or fully interactive HTML pages with inline JS — charts, toggles, simulations all work.
