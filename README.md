@@ -8,9 +8,9 @@ Your coding agent writes a design doc, a comparison table, a research report —
 
 ```
 You:   "put this on the board"
-Agent: docket publish review.html
+Agent: docket publish out.html
        --type review --summary …
-You:   read on your phone → archive
+You:   read on phone → archive
 ```
 
 <p align="center">

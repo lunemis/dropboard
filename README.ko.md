@@ -8,7 +8,7 @@
 
 ```
 나:  "board에 올려줘"
-AI:  docket publish review.html
+AI:  docket publish out.html
      --type review --summary …
 나:  폰에서 읽고 → 보관. 끝.
 ```
