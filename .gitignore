@@ -40,7 +40,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# docket data (items live here, backup = copy this folder)
+# board data (items live here, backup = copy this folder)
 /data
 
 !.env.example

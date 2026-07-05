@@ -12,7 +12,7 @@ type Ctx = { params: Promise<{ id: string }> };
 /* Bypassed by middleware — authenticates itself: signed URL (viewer iframe),
  * bearer token (CLI/AI), or session cookie (direct top-level open). */
 async function isAuthorized(req: NextRequest, id: string): Promise<boolean> {
-  const secret = process.env.DOCKET_SESSION_SECRET;
+  const secret = process.env.DROPBOARD_SESSION_SECRET;
   if (!secret) return true; // auth not configured (bare dev)
 
   const sp = req.nextUrl.searchParams;
@@ -20,7 +20,7 @@ async function isAuthorized(req: NextRequest, id: string): Promise<boolean> {
   if (sig && (await verifyRawSig(secret, id, Number(sp.get("e")), sig))) {
     return true;
   }
-  const token = process.env.DOCKET_TOKEN;
+  const token = process.env.DROPBOARD_TOKEN;
   if (token && req.headers.get("authorization") === `Bearer ${token}`) {
     return true;
   }
@@ -35,9 +35,9 @@ function escapeHtml(s: string): string {
   );
 }
 
-/* Self-contained document shell for markdown items — mirrors the docket palette. */
+/* Self-contained document shell for markdown items — mirrors the board palette. */
 function markdownShell(title: string, bodyHtml: string): string {
-  const lang = process.env.NEXT_PUBLIC_DOCKET_LOCALE === "ko" ? "ko" : "en";
+  const lang = process.env.NEXT_PUBLIC_DROPBOARD_LOCALE === "ko" ? "ko" : "en";
   return `<!doctype html>
 <html lang="${lang}">
 <head>

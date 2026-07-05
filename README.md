@@ -1,14 +1,14 @@
-# docketry
+# dropboard
 
 **A self-hosted review board for AI-generated deliverables.**
 
 ![MIT license](https://img.shields.io/badge/license-MIT-2ea44f) ![Works with any agent](https://img.shields.io/badge/agents-Claude%20Code%20·%20Codex%20·%20any-5b7db1) ![No database](https://img.shields.io/badge/database-none-c2472f)
 
-Your coding agent writes a design doc, a comparison table, a research report — and dumps it into the chat, where it's unreadable on your phone and lost in scrollback by tomorrow. docketry gives agents one command to publish that deliverable as a real web page, and gives you a mobile-friendly inbox to read, keep, or let expire.
+Your coding agent writes a design doc, a comparison table, a research report — and dumps it into the chat, where it's unreadable on your phone and lost in scrollback by tomorrow. dropboard gives agents one command to publish that deliverable as a real web page, and gives you a mobile-friendly inbox to read, keep, or let expire.
 
 ```
 You:   "put this on the board"
-Agent: docket publish out.html
+Agent: dropboard publish out.html
        --type review --summary …
 You:   read on phone → archive
 ```
@@ -31,9 +31,9 @@ You:   read on phone → archive
 
 ## Why the name?
 
-A **docket** is the queue of cases waiting to be heard in court — each one summarized, stamped, and scheduled for review. That's exactly what your agents produce all day: deliverables waiting for your judgment. docketry is where they get filed; the stamp-seal badges in the UI carry the same metaphor, and the CLI is simply `docket`.
+Because that's the whole gesture: your agents **drop** deliverables on a **board**, and the board holds them until you've looked. The stamp-seal badges tell you at a glance what kind of look each one needs — a review, a decision, or just a read.
 
-## Why docketry
+## Why dropboard
 
 - **Agent-agnostic.** Anything that can run a CLI or hit a REST endpoint can publish: Claude Code, Codex, Cursor, aider, your own scripts. Ready-made skill/prompt files are included in [`integrations/`](integrations/).
 - **Built for review, not chat.** An inbox with unread markers, type seals (review / decision / report / info / fun), pinning, archive and trash with undo — the lifecycle a deliverable actually has. Chat transcripts and vendor artifact panes have none of this.
@@ -45,13 +45,13 @@ A **docket** is the queue of cases waiting to be heard in court — each one sum
 ## Quick start
 
 ```bash
-git clone https://github.com/lunemis/docketry.git && cd docketry
+git clone https://github.com/lunemis/dropboard.git && cd dropboard
 npm install
 
 cat > .env.local <<EOF
-DOCKET_TOKEN=$(openssl rand -hex 24)        # publish API auth
-DOCKET_PIN=123456                           # 6-digit UI login
-DOCKET_SESSION_SECRET=$(openssl rand -hex 32)
+DROPBOARD_TOKEN=$(openssl rand -hex 24)        # publish API auth
+DROPBOARD_PIN=123456                           # 6-digit UI login
+DROPBOARD_SESSION_SECRET=$(openssl rand -hex 32)
 EOF
 
 npm run dev        # http://localhost:3000
@@ -60,11 +60,11 @@ npm run dev        # http://localhost:3000
 Publish something:
 
 ```bash
-mkdir -p ~/.config/docket
-echo '{"url":"http://localhost:3000","token":"<your DOCKET_TOKEN>"}' > ~/.config/docket/config.json
-ln -s "$PWD/bin/docket.mjs" ~/.local/bin/docket   # or: npm link
+mkdir -p ~/.config/dropboard
+echo '{"url":"http://localhost:3000","token":"<your DROPBOARD_TOKEN>"}' > ~/.config/dropboard/config.json
+ln -s "$PWD/bin/dropboard.mjs" ~/.local/bin/dropboard   # or: npm link
 
-docket publish notes.md --type info --summary "first item"
+dropboard publish notes.md --type info --summary "first item"
 ```
 
 Open the board, log in with your PIN, review.
@@ -72,9 +72,9 @@ Open the board, log in with your PIN, review.
 ## Publishing
 
 ```bash
-docket publish <file> [--title T] [--type review|decision|report|info|fun]
+dropboard publish <file> [--title T] [--type review|decision|report|info|fun]
                       [--project P] [--summary S] [--tags a,b] [--server URL]
-docket list [--status inbox|archived|trash]
+dropboard list [--status inbox|archived|trash]
 ```
 
 `.md`/`.markdown` files are rendered with the built-in document template; everything else is served as-is. Titles are auto-derived from `<title>`/`<h1>`/first `#` heading.
@@ -85,13 +85,13 @@ Or REST, from anything:
 
 ```bash
 curl -X POST $URL/api/items \
-  -H "Authorization: Bearer $DOCKET_TOKEN" -H 'Content-Type: application/json' \
+  -H "Authorization: Bearer $DROPBOARD_TOKEN" -H 'Content-Type: application/json' \
   -d '{"title":"...","type":"review","summary":"...","content":"<!doctype html>...","content_type":"html"}'
 ```
 
 ## Agent integration
 
-The point of docket is that you say "put it on the board" and it happens. See [`integrations/`](integrations/):
+The point of dropboard is that you say "put it on the board" and it happens. See [`integrations/`](integrations/):
 
 - `claude-code/SKILL.md` — drop into `~/.claude/skills/board/`
 - `codex/` — symlink the same skill into `~/.codex/skills/`
@@ -101,17 +101,17 @@ Each includes artifact quality rules (self-contained HTML, mobile-first, light/d
 
 ## Configuration
 
-- `DOCKET_TOKEN` (required) — bearer token for the publish API
-- `DOCKET_PIN` (required) — 6-digit UI login; 5 failures → 15 min lockout
-- `DOCKET_SESSION_SECRET` (required) — HMAC key for session cookies & signed URLs
-- `DOCKET_DATA_DIR` (default `./data/items`) — item storage location
-- `DOCKET_TRASH_TTL_DAYS` (default `30`) — days before the built-in sweeper purges trash; `0` skips the trash purge (expired temp items are always swept)
-- `NEXT_PUBLIC_DOCKET_LOCALE` (default `en`) — UI language `en`/`ko` (build-time)
+- `DROPBOARD_TOKEN` (required) — bearer token for the publish API
+- `DROPBOARD_PIN` (required) — 6-digit UI login; 5 failures → 15 min lockout
+- `DROPBOARD_SESSION_SECRET` (required) — HMAC key for session cookies & signed URLs
+- `DROPBOARD_DATA_DIR` (default `./data/items`) — item storage location
+- `DROPBOARD_TRASH_TTL_DAYS` (default `30`) — days before the built-in sweeper purges trash; `0` skips the trash purge (expired temp items are always swept)
+- `NEXT_PUBLIC_DROPBOARD_LOCALE` (default `en`) — UI language `en`/`ko` (build-time)
 
 ## Operating
 
 - **Production**: `npm run build && npm run start -- -p <port>` under any supervisor (launchd, systemd, pm2, Docker).
-- **Trash cleanup**: automatic — a built-in sweeper runs inside the server every 15 minutes. Prefer an external schedule? Set `DOCKET_TRASH_TTL_DAYS=0` and cron `npm run cleanup` instead.
+- **Trash cleanup**: automatic — a built-in sweeper runs inside the server every 15 minutes. Prefer an external schedule? Set `DROPBOARD_TRASH_TTL_DAYS=0` and cron `npm run cleanup` instead.
 - **Remote access**: put it behind your own tunnel/reverse proxy (Cloudflare Tunnel, Tailscale). Session cookies are marked `Secure` automatically when served over HTTPS.
 
 ## Security model

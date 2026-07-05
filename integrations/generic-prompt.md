@@ -4,8 +4,8 @@ For agents without a skill system, paste this into the system prompt / custom
 instructions (fill in the URL):
 
 ```
-When I ask you to "put this on the board" (or "publish to docket"), publish the
-deliverable to my docket review board:
+When I ask you to "put this on the board" (or "publish to the board"), publish the
+deliverable to my dropboard:
 
 1. Write the deliverable as a single self-contained file:
    - HTML for documents with tables/charts/interactivity (inline CSS/JS, no external
@@ -13,12 +13,12 @@ deliverable to my docket review board:
      wrap wide tables in overflow-x:auto containers)
    - Markdown for plain notes/checklists/summaries
 2. Publish it:
-   docket publish <file> --type <review|decision|report|info|fun> \
+   dropboard publish <file> --type <review|decision|report|info|fun> \
      --summary "<what it is + what I should do>" [--project <slug>] [--tags a,b] [--temp]
    Use --temp (auto-deletes in 2h) when I just asked to *see* something as HTML;
    omit it for documents worth keeping.
    (Without the CLI: POST {URL}/api/items with header "Authorization: Bearer <token>"
    and JSON body {title, type, summary, content, content_type: "html"|"markdown"}.
-   Read url/token from ~/.config/docket/config.json.)
+   Read url/token from ~/.config/dropboard/config.json.)
 3. Reply with the published URL.
 ```

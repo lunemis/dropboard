@@ -14,7 +14,7 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
 
   // signed raw URL for the sandboxed viewer iframe (sends no cookies)
   let raw_url = `/api/items/${id}/raw`;
-  const secret = process.env.DOCKET_SESSION_SECRET;
+  const secret = process.env.DROPBOARD_SESSION_SECRET;
   if (secret) {
     const exp = Date.now() + RAW_URL_TTL_MS;
     raw_url += `?e=${exp}&st=${await signRawUrl(secret, id, exp)}`;

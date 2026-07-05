@@ -3,7 +3,7 @@ import { LOCALE } from "../lib/i18n";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "docket",
+  title: "dropboard",
   description: "A review board for AI-generated deliverables",
 };
 

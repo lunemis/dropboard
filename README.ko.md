@@ -1,14 +1,14 @@
-# docketry
+# dropboard
 
 **AI 산출물을 위한 셀프호스팅 리뷰 보드.**
 
 ![MIT license](https://img.shields.io/badge/license-MIT-2ea44f) ![Works with any agent](https://img.shields.io/badge/agents-Claude%20Code%20·%20Codex%20·%20any-5b7db1) ![No database](https://img.shields.io/badge/database-none-c2472f)
 
-코딩 에이전트가 설계 문서, 비교 분석, 리서치 리포트를 만들어서 — 채팅창에 쏟아냅니다. 폰에서는 읽기 힘들고, 내일이면 스크롤 속으로 사라지죠. docketry는 에이전트에게 그 산출물을 제대로 된 웹페이지로 게시하는 명령 하나를 주고, 당신에게는 읽고·남기고·흘려보낼 수 있는 모바일 친화적인 받은함을 줍니다.
+코딩 에이전트가 설계 문서, 비교 분석, 리서치 리포트를 만들어서 — 채팅창에 쏟아냅니다. 폰에서는 읽기 힘들고, 내일이면 스크롤 속으로 사라지죠. dropboard는 에이전트에게 그 산출물을 제대로 된 웹페이지로 게시하는 명령 하나를 주고, 당신에게는 읽고·남기고·흘려보낼 수 있는 모바일 친화적인 받은함을 줍니다.
 
 ```
 나:  "board에 올려줘"
-AI:  docket publish out.html
+AI:  dropboard publish out.html
      --type review --summary …
 나:  폰에서 읽고 → 보관. 끝.
 ```
@@ -31,9 +31,9 @@ AI:  docket publish out.html
 
 ## 이름의 유래
 
-**docket**은 법정에서 심리를 기다리는 안건 목록입니다 — 안건마다 요약이 붙고, 도장이 찍히고, 검토 순서를 기다리죠. 에이전트가 하루 종일 만들어내는 것이 정확히 그렇습니다: 당신의 판단을 기다리는 산출물들. docketry는 그것들이 접수되는 곳이고, UI의 도장 뱃지도 같은 은유입니다. 그래서 CLI 명령도 `docket`입니다.
+동작 그대로입니다: 에이전트가 산출물을 보드에 **툭 올려두면(drop)**, **보드(board)** 가 당신이 볼 때까지 붙들고 있습니다. 도장 뱃지는 각 항목에 어떤 종류의 '봐주기'가 필요한지 — 검토인지, 결정인지, 그냥 읽으면 되는지 — 한눈에 알려주고요.
 
-## 왜 docketry인가
+## 왜 dropboard인가
 
 - **에이전트를 가리지 않습니다.** CLI를 실행하거나 REST를 호출할 수 있으면 뭐든 게시할 수 있습니다: Claude Code, Codex, Cursor, aider, 직접 만든 스크립트까지. [`integrations/`](integrations/)에 바로 쓸 수 있는 스킬/프롬프트 파일이 들어 있습니다.
 - **채팅이 아니라 리뷰를 위해 만들어졌습니다.** 미읽음 표시, 유형 도장(검토/결정/리포트/정보/재미), 핀 고정, 실행취소가 되는 보관함과 휴지통 — 산출물이 실제로 거치는 수명주기를 그대로 담았습니다. 채팅 기록이나 벤더 아티팩트 패널에는 없는 것들이죠.
@@ -45,13 +45,13 @@ AI:  docket publish out.html
 ## 빠른 시작
 
 ```bash
-git clone https://github.com/lunemis/docketry.git && cd docketry
+git clone https://github.com/lunemis/dropboard.git && cd dropboard
 npm install
 
 cat > .env.local <<EOF
-DOCKET_TOKEN=$(openssl rand -hex 24)        # 게시 API 인증
-DOCKET_PIN=123456                           # UI 로그인용 6자리 PIN
-DOCKET_SESSION_SECRET=$(openssl rand -hex 32)
+DROPBOARD_TOKEN=$(openssl rand -hex 24)        # 게시 API 인증
+DROPBOARD_PIN=123456                           # UI 로그인용 6자리 PIN
+DROPBOARD_SESSION_SECRET=$(openssl rand -hex 32)
 EOF
 
 npm run dev        # http://localhost:3000
@@ -60,11 +60,11 @@ npm run dev        # http://localhost:3000
 첫 게시:
 
 ```bash
-mkdir -p ~/.config/docket
-echo '{"url":"http://localhost:3000","token":"<발급한 DOCKET_TOKEN>"}' > ~/.config/docket/config.json
-ln -s "$PWD/bin/docket.mjs" ~/.local/bin/docket   # 또는: npm link
+mkdir -p ~/.config/dropboard
+echo '{"url":"http://localhost:3000","token":"<발급한 DROPBOARD_TOKEN>"}' > ~/.config/dropboard/config.json
+ln -s "$PWD/bin/dropboard.mjs" ~/.local/bin/dropboard   # 또는: npm link
 
-docket publish notes.md --type info --summary "첫 항목"
+dropboard publish notes.md --type info --summary "첫 항목"
 ```
 
 보드를 열고 PIN으로 로그인해서 확인하면 됩니다.
@@ -72,15 +72,15 @@ docket publish notes.md --type info --summary "첫 항목"
 UI를 한국어로 쓰려면 `.env.local`에 한 줄 추가:
 
 ```bash
-NEXT_PUBLIC_DOCKET_LOCALE=ko
+NEXT_PUBLIC_DROPBOARD_LOCALE=ko
 ```
 
 ## 게시하기
 
 ```bash
-docket publish <파일> [--title 제목] [--type review|decision|report|info|fun]
+dropboard publish <파일> [--title 제목] [--type review|decision|report|info|fun]
                       [--project 프로젝트] [--summary 요약] [--tags a,b] [--server URL]
-docket list [--status inbox|archived|trash]
+dropboard list [--status inbox|archived|trash]
 ```
 
 `.md`/`.markdown` 파일은 내장 문서 템플릿으로 렌더링되고, 그 외에는 그대로 서빙됩니다. 제목을 생략하면 `<title>`/`<h1>`/첫 `#` 헤딩에서 자동으로 뽑습니다.
@@ -91,13 +91,13 @@ REST로 직접 호출할 수도 있습니다:
 
 ```bash
 curl -X POST $URL/api/items \
-  -H "Authorization: Bearer $DOCKET_TOKEN" -H 'Content-Type: application/json' \
+  -H "Authorization: Bearer $DROPBOARD_TOKEN" -H 'Content-Type: application/json' \
   -d '{"title":"...","type":"review","summary":"...","content":"<!doctype html>...","content_type":"html"}'
 ```
 
 ## 에이전트 연동
 
-docketry의 핵심은 "board에 올려줘" 한 마디로 게시가 끝나는 것입니다. [`integrations/`](integrations/)를 참고하세요:
+dropboard의 핵심은 "board에 올려줘" 한 마디로 게시가 끝나는 것입니다. [`integrations/`](integrations/)를 참고하세요:
 
 - `claude-code/SKILL.md` — `~/.claude/skills/board/`에 넣기
 - `codex/` — 같은 스킬을 `~/.codex/skills/`에 심볼릭 링크
@@ -107,17 +107,17 @@ docketry의 핵심은 "board에 올려줘" 한 마디로 게시가 끝나는 것
 
 ## 설정
 
-- `DOCKET_TOKEN` (필수) — 게시/API 접근용 Bearer 토큰
-- `DOCKET_PIN` (필수) — UI 로그인 6자리 PIN. 5회 실패 시 15분 잠금
-- `DOCKET_SESSION_SECRET` (필수) — 세션 쿠키·서명 URL용 HMAC 키
-- `DOCKET_DATA_DIR` (기본 `./data/items`) — 항목 저장 위치
-- `DOCKET_TRASH_TTL_DAYS` (기본 `30`) — 내장 스위퍼가 휴지통을 비우기까지의 일수. `0`이면 휴지통 정리만 건너뜀 (만료된 temp 항목은 항상 정리)
-- `NEXT_PUBLIC_DOCKET_LOCALE` (기본 `en`) — UI 언어 `en`/`ko` (빌드 타임)
+- `DROPBOARD_TOKEN` (필수) — 게시/API 접근용 Bearer 토큰
+- `DROPBOARD_PIN` (필수) — UI 로그인 6자리 PIN. 5회 실패 시 15분 잠금
+- `DROPBOARD_SESSION_SECRET` (필수) — 세션 쿠키·서명 URL용 HMAC 키
+- `DROPBOARD_DATA_DIR` (기본 `./data/items`) — 항목 저장 위치
+- `DROPBOARD_TRASH_TTL_DAYS` (기본 `30`) — 내장 스위퍼가 휴지통을 비우기까지의 일수. `0`이면 휴지통 정리만 건너뜀 (만료된 temp 항목은 항상 정리)
+- `NEXT_PUBLIC_DROPBOARD_LOCALE` (기본 `en`) — UI 언어 `en`/`ko` (빌드 타임)
 
 ## 운영
 
 - **프로덕션**: `npm run build && npm run start -- -p <포트>` — launchd, systemd, pm2, Docker 등 아무 수퍼바이저 아래에서.
-- **휴지통 정리**: 자동입니다 — 서버 안에서 내장 스위퍼가 15분마다 돕니다. 외부 스케줄러를 쓰고 싶다면 `DOCKET_TRASH_TTL_DAYS=0`으로 끄고 `npm run cleanup`을 cron에 거세요.
+- **휴지통 정리**: 자동입니다 — 서버 안에서 내장 스위퍼가 15분마다 돕니다. 외부 스케줄러를 쓰고 싶다면 `DROPBOARD_TRASH_TTL_DAYS=0`으로 끄고 `npm run cleanup`을 cron에 거세요.
 - **외부 접속**: 본인의 터널/리버스 프록시(Cloudflare Tunnel, Tailscale) 뒤에 두면 됩니다. HTTPS로 서빙되면 세션 쿠키에 자동으로 `Secure`가 붙습니다.
 
 ## 보안 모델

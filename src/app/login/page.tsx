@@ -57,7 +57,7 @@ export default function LoginPage() {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-8 px-6">
       <h1 className="font-mono text-2xl font-bold tracking-tight">
-        docket<span className="text-[var(--accent)]">_</span>
+        dropboard<span className="text-[var(--accent)]">_</span>
       </h1>
 
       <label className="flex flex-col items-center gap-4">

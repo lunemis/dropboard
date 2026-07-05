@@ -10,11 +10,11 @@ let fails = 0;
 let lockedUntil = 0;
 
 export async function POST(req: NextRequest) {
-  const pin = process.env.DOCKET_PIN;
-  const secret = process.env.DOCKET_SESSION_SECRET;
+  const pin = process.env.DROPBOARD_PIN;
+  const secret = process.env.DROPBOARD_SESSION_SECRET;
   if (!pin || !secret) {
     return NextResponse.json(
-      { error: "server missing DOCKET_PIN / DOCKET_SESSION_SECRET" },
+      { error: "server missing DROPBOARD_PIN / DROPBOARD_SESSION_SECRET" },
       { status: 500 },
     );
   }

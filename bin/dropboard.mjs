@@ -3,20 +3,20 @@
  * docket — publish AI deliverables to the Docket review board.
  *
  * Usage:
- *   docket publish <file> [--title T] [--type review|decision|report|info|fun]
+ *   dropboard publish <file> [--title T] [--type review|decision|report|info|fun]
  *                         [--project P] [--summary S] [--tags a,b] [--source S]
  *                         [--server URL]
- *   docket list [--status inbox|archived|trash]
+ *   dropboard list [--status inbox|archived|trash]
  *
  * Config: ~/.config/docket/config.json  { "url": "...", "token": "..." }
- * Env overrides: DOCKET_URL, DOCKET_TOKEN
+ * Env overrides: DROPBOARD_URL, DROPBOARD_TOKEN
  */
 import { readFile } from "node:fs/promises";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import os from "node:os";
 
-const CONFIG_PATH = path.join(os.homedir(), ".config", "docket", "config.json");
+const CONFIG_PATH = path.join(os.homedir(), ".config", "dropboard", "config.json");
 const TYPES = ["review", "decision", "report", "info", "fun"];
 
 function loadConfig() {
@@ -63,7 +63,7 @@ function deriveTitle(content, isMarkdown, file) {
 function serverUrl(flags, cfg) {
   return (
     flags.server ||
-    process.env.DOCKET_URL ||
+    process.env.DROPBOARD_URL ||
     cfg.url ||
     "http://localhost:3000"
   ).replace(/\/$/, "");
@@ -72,7 +72,7 @@ function serverUrl(flags, cfg) {
 async function publish(argv) {
   const { flags, positional } = parseArgs(argv);
   const file = positional[0];
-  if (!file) die("usage: docket publish <file> [--title ...] [--type ...]");
+  if (!file) die("usage: dropboard publish <file> [--title ...] [--type ...]");
 
   let content;
   try {
@@ -87,11 +87,11 @@ async function publish(argv) {
 
   const cfg = loadConfig();
   const url = serverUrl(flags, cfg);
-  const token = process.env.DOCKET_TOKEN || cfg.token;
+  const token = process.env.DROPBOARD_TOKEN || cfg.token;
   if (!token)
     die(
-      `no token. Set DOCKET_TOKEN or add "token" to ${CONFIG_PATH}\n` +
-        `(same value as DOCKET_TOKEN in your docket server's .env.local)`,
+      `no token. Set DROPBOARD_TOKEN or add "token" to ${CONFIG_PATH}\n` +
+        `(same value as DROPBOARD_TOKEN in your docket server's .env.local)`,
     );
 
   const body = {
@@ -99,7 +99,7 @@ async function publish(argv) {
     type,
     content,
     content_type: isMarkdown ? "markdown" : "html",
-    source: flags.source || "docket-cli",
+    source: flags.source || "dropboard-cli",
   };
   if (flags.project) body.project = flags.project;
   if (flags.summary) body.summary = flags.summary;
@@ -140,7 +140,7 @@ async function list(argv) {
   const { flags } = parseArgs(argv);
   const cfg = loadConfig();
   const url = serverUrl(flags, cfg);
-  const token = process.env.DOCKET_TOKEN || cfg.token;
+  const token = process.env.DROPBOARD_TOKEN || cfg.token;
   const status = flags.status || "inbox";
 
   let res;
@@ -167,13 +167,13 @@ const [cmd, ...rest] = process.argv.slice(2);
 if (cmd === "publish") await publish(rest);
 else if (cmd === "list") await list(rest);
 else {
-  console.log(`docket — publish AI deliverables to your review board
+  console.log(`dropboard — publish AI deliverables to your review board
 
 commands:
-  docket publish <file> [--title T] [--type ${TYPES.join("|")}]
+  dropboard publish <file> [--title T] [--type ${TYPES.join("|")}]
                         [--temp [30m|2h|1d]]   # ephemeral: auto-deletes (default 2h)
                         [--project P] [--summary S] [--tags a,b] [--server URL]
-  docket list [--status inbox|archived|trash]
+  dropboard list [--status inbox|archived|trash]
 
 .md/.markdown files are published as markdown, everything else as html.
 config: ${CONFIG_PATH}  { "url": "http://localhost:3000", "token": "..." }`);

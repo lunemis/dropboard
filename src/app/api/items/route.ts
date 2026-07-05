@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   if (!isWriteAuthorized(req)) {
     return NextResponse.json(
-      { error: "unauthorized (Bearer DOCKET_TOKEN required)" },
+      { error: "unauthorized (Bearer DROPBOARD_TOKEN required)" },
       { status: 401 },
     );
   }

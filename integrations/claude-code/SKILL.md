@@ -1,11 +1,11 @@
 ---
 name: board
-description: Publish AI deliverables (design docs, analyses, reports, fun content) to the user's docket review board as web pages. Use when the user says "put this on the board", "publish to docket", "board에 올려줘", or asks to make a long deliverable readable on mobile.
+description: Publish AI deliverables (design docs, analyses, reports, fun content) to the user's dropboard review board as web pages. Use when the user says "put this on the board", "publish to the board", "board에 올려줘", or asks to make a long deliverable readable on mobile.
 ---
 
-# board — publish deliverables to docket
+# board — publish deliverables to dropboard
 
-docket is the user's personal review board. Publish conversation deliverables as
+dropboard is the user's personal review board. Publish conversation deliverables as
 self-contained web pages; the user reviews them on the board (including on mobile)
 and archives/deletes them there.
 
@@ -30,13 +30,13 @@ press Keep to retain one. When unsure, publish as keep — deleting is easy.
      renders it with a clean document template)
 2. **Publish**:
    ```bash
-   docket publish <file> --type <type> --project <project-slug> \
+   dropboard publish <file> --type <type> --project <project-slug> \
      --summary "<one-line summary>" --tags a,b --source <agent-name> \
      [--temp]   # temp mode only; custom duration: --temp 30m / --temp 1d
    ```
    - If `--title` is omitted it is derived from `<title>`/`<h1>`/first `#` heading —
      make sure one of them exists.
-   - Fallback without the CLI: read `~/.config/docket/config.json` (url/token) and
+   - Fallback without the CLI: read `~/.config/dropboard/config.json` (url/token) and
      `POST {url}/api/items` with a Bearer token (JSON: title/type/content/content_type/…).
 3. **Report** the printed URL back to the user.
 
@@ -65,4 +65,4 @@ press Keep to retain one. When unsure, publish as keep — deleting is easy.
 
 ## Verify
 
-`docket list` shows the inbox to confirm the item landed.
+`dropboard list` shows the inbox to confirm the item landed.

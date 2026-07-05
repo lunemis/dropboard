@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 /**
- * Permanently delete trashed items older than DOCKET_TRASH_TTL_DAYS (default 30).
+ * Permanently delete trashed items older than DROPBOARD_TRASH_TTL_DAYS (default 30).
  * Usage: node scripts/cleanup.mjs [--dry]
  */
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
 const DATA_DIR =
-  process.env.DOCKET_DATA_DIR ?? path.join(process.cwd(), "data", "items");
-const TTL_DAYS = Number(process.env.DOCKET_TRASH_TTL_DAYS ?? 30);
+  process.env.DROPBOARD_DATA_DIR ?? path.join(process.cwd(), "data", "items");
+const TTL_DAYS = Number(process.env.DROPBOARD_TRASH_TTL_DAYS ?? 30);
 const dry = process.argv.includes("--dry");
 const cutoff = Date.now() - TTL_DAYS * 86400_000;
 

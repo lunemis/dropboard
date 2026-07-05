@@ -3,7 +3,7 @@ import path from "node:path";
 import type { CreateItemInput, ItemMeta, ItemStatus, ItemType } from "./types";
 
 const DATA_DIR =
-  process.env.DOCKET_DATA_DIR ?? path.join(process.cwd(), "data", "items");
+  process.env.DROPBOARD_DATA_DIR ?? path.join(process.cwd(), "data", "items");
 
 const ID_RE = /^\d{8}-\d{6}-[a-z0-9]{4}$/;
 

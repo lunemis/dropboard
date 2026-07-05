@@ -1,7 +1,7 @@
 export type Locale = "en" | "ko";
 
 export const LOCALE: Locale =
-  process.env.NEXT_PUBLIC_DOCKET_LOCALE === "ko" ? "ko" : "en";
+  process.env.NEXT_PUBLIC_DROPBOARD_LOCALE === "ko" ? "ko" : "en";
 
 const STRINGS = {
   en: {

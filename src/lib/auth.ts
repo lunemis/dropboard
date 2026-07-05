@@ -1,8 +1,8 @@
 import { timingSafeEqual } from "node:crypto";
 
-/** Write-API auth: Authorization: Bearer $DOCKET_TOKEN. */
+/** Write-API auth: Authorization: Bearer $DROPBOARD_TOKEN. */
 export function isWriteAuthorized(req: Request): boolean {
-  const token = process.env.DOCKET_TOKEN;
+  const token = process.env.DROPBOARD_TOKEN;
   if (!token) return false;
   const header = req.headers.get("authorization") ?? "";
   const expected = `Bearer ${token}`;

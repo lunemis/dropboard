@@ -1,5 +1,5 @@
 {
-  "name": "docketry",
+  "name": "dropboard",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -28,6 +28,6 @@
   "description": "Self-hosted review board for AI-generated deliverables",
   "license": "MIT",
   "bin": {
-    "docket": "bin/docket.mjs"
+    "dropboard": "bin/dropboard.mjs"
   }
 }

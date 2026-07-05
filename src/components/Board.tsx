@@ -256,7 +256,7 @@ export default function Board({ status }: { status: ItemStatus }) {
       <header className="sticky top-0 z-10 border-b border-[var(--line)] bg-[var(--bg)]/90 px-4 pt-4 backdrop-blur">
         <div className="flex items-baseline justify-between">
           <h1 className="font-mono text-lg font-bold tracking-tight">
-            docket<span className="text-[var(--accent)]">_</span>
+            dropboard<span className="text-[var(--accent)]">_</span>
           </h1>
           {unreadCount > 0 && (
             <span className="font-mono text-xs text-[var(--accent)]">

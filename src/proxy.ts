@@ -13,13 +13,13 @@ export default async function proxy(req: NextRequest) {
 
   // CLI / AI sessions: bearer token grants full API access
   if (pathname.startsWith("/api/")) {
-    const token = process.env.DOCKET_TOKEN;
+    const token = process.env.DROPBOARD_TOKEN;
     if (token && req.headers.get("authorization") === `Bearer ${token}`) {
       return NextResponse.next();
     }
   }
 
-  const secret = process.env.DOCKET_SESSION_SECRET;
+  const secret = process.env.DROPBOARD_SESSION_SECRET;
   if (!secret) return NextResponse.next(); // auth not configured (bare dev)
 
   const cookie = req.cookies.get(SESSION_COOKIE)?.value;

@@ -25,7 +25,7 @@ function timingEq(a: string, b: string): boolean {
   return r === 0;
 }
 
-export const SESSION_COOKIE = "docket_session";
+export const SESSION_COOKIE = "dropboard_session";
 
 export async function createSessionToken(
   secret: string,
