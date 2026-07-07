@@ -62,7 +62,8 @@ Publish something:
 ```bash
 mkdir -p ~/.config/dropboard
 echo '{"url":"http://localhost:3000","token":"<your DROPBOARD_TOKEN>"}' > ~/.config/dropboard/config.json
-ln -s "$PWD/bin/dropboard.mjs" ~/.local/bin/dropboard   # or: npm link
+npm link                                                # puts `dropboard` on your PATH — works everywhere
+# Linux/macOS alternative: ln -s "$PWD/bin/dropboard.mjs" ~/.local/bin/dropboard
 
 dropboard publish notes.md --type info --summary "first item"
 ```
@@ -115,6 +116,45 @@ Each includes artifact quality rules (self-contained HTML, mobile-first, light/d
 - **Production**: `npm run build && npm run start -- -p <port>` under any supervisor (launchd, systemd, pm2, Docker).
 - **Trash cleanup**: automatic — a built-in sweeper runs inside the server every 15 minutes. Prefer an external schedule? Set `DROPBOARD_TRASH_TTL_DAYS=0` and cron `npm run cleanup` instead.
 - **Remote access**: put it behind your own tunnel/reverse proxy (Cloudflare Tunnel, Tailscale). Session cookies are marked `Secure` automatically when served over HTTPS.
+
+### systemd (Linux, no root)
+
+Run it as a **user** service:
+
+```ini
+# ~/.config/systemd/user/dropboard.service
+[Unit]
+Description=dropboard
+After=network.target
+
+[Service]
+WorkingDirectory=/path/to/dropboard
+ExecStart=/usr/bin/env npm run start -- -p 3000
+Restart=on-failure
+
+[Install]
+WantedBy=default.target
+```
+
+```bash
+systemctl --user enable --now dropboard
+loginctl enable-linger "$USER"   # required, or the service won't start until you next log in
+```
+
+`enable-linger` is the easy-to-miss part: without it a user service only runs while you have an active login session, so dropboard silently won't come back after a reboot. If Node came from a version manager (nvm, etc.), point `ExecStart` at that Node's absolute path — the unit doesn't source your shell profile.
+
+### Windows
+
+There's no launchd/systemd. Task Scheduler works when you have the rights, but on locked-down/corporate machines `schtasks /create` can fail with `Access is denied` even for a per-user task. A no-admin fallback is a hidden-window launcher in your Startup folder:
+
+```vbscript
+' dropboard.vbs
+Set sh = CreateObject("WScript.Shell")
+sh.CurrentDirectory = "C:\path\to\dropboard"
+sh.Run "cmd /c npm run start >> ""dropboard.log"" 2>&1", 0, False
+```
+
+Drop it into `%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup`. It launches `next start` silently on every login — no console window, no elevation. For a proper Windows service, [`nssm`](https://nssm.cc/) (`nssm install dropboard`) is the usual tool when you can install it.
 
 ## Sharing an item
 
