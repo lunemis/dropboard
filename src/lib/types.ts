@@ -21,6 +21,8 @@ export interface ItemMeta {
   trashed_at: string | null;
   /** temp items only — item vanishes past this time; null/absent = keep */
   expires_at?: string | null;
+  /** bumped to invalidate all previously issued public share links */
+  share_epoch?: number;
   created_at: string;
   updated_at: string;
   source: string;

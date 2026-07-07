@@ -14,6 +14,15 @@ const TABS: { href: string; label: string; status: ItemStatus }[] = [
 
 const TYPE_KEYS = Object.keys(TYPE_LABELS) as ItemType[];
 
+type BoardWidth = "narrow" | "wide" | "full";
+const WIDTH_STORAGE_KEY = "dropboard:board-width";
+const WIDTH_PX: Record<BoardWidth, string> = {
+  narrow: "36rem",
+  wide: "64rem",
+  full: "100%",
+};
+const WIDTH_OPTIONS: BoardWidth[] = ["narrow", "wide", "full"];
+
 interface Toast {
   msg: string;
   undo?: () => void;
@@ -38,6 +47,19 @@ export default function Board({ status }: { status: ItemStatus }) {
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const confirmTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [boardWidth, setBoardWidthState] = useState<BoardWidth>("narrow");
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem(WIDTH_STORAGE_KEY);
+    if (stored && WIDTH_OPTIONS.includes(stored as BoardWidth)) {
+      setBoardWidthState(stored as BoardWidth);
+    }
+  }, []);
+
+  const setBoardWidth = useCallback((w: BoardWidth) => {
+    setBoardWidthState(w);
+    window.localStorage.setItem(WIDTH_STORAGE_KEY, w);
+  }, []);
 
   const load = useCallback(async () => {
     try {
@@ -252,17 +274,46 @@ export default function Board({ status }: { status: ItemStatus }) {
   );
 
   return (
-    <div className="mx-auto flex w-full max-w-xl flex-1 flex-col">
+    <div
+      className="mx-auto flex w-full flex-1 flex-col"
+      style={{ maxWidth: WIDTH_PX[boardWidth] }}
+    >
       <header className="sticky top-0 z-10 border-b border-[var(--line)] bg-[var(--bg)]/90 px-4 pt-4 backdrop-blur">
         <div className="flex items-baseline justify-between">
           <h1 className="font-mono text-lg font-bold tracking-tight">
             dropboard<span className="text-[var(--accent)]">_</span>
           </h1>
-          {unreadCount > 0 && (
-            <span className="font-mono text-xs text-[var(--accent)]">
-              {t.unread(unreadCount)}
-            </span>
-          )}
+          <div className="flex items-center gap-3">
+            {unreadCount > 0 && (
+              <span className="font-mono text-xs text-[var(--accent)]">
+                {t.unread(unreadCount)}
+              </span>
+            )}
+            <div
+              className="hidden items-center gap-1 sm:flex"
+              role="group"
+              aria-label={t.widthLabel}
+            >
+              {WIDTH_OPTIONS.map((w) => (
+                <button
+                  key={w}
+                  onClick={() => setBoardWidth(w)}
+                  title={t.widthLabel}
+                  className={`rounded-full px-2.5 py-1 font-mono text-[11px] ${
+                    boardWidth === w
+                      ? "bg-[var(--ink)] font-semibold text-[var(--bg)]"
+                      : "text-[var(--muted)]"
+                  }`}
+                >
+                  {w === "narrow"
+                    ? t.widthNarrow
+                    : w === "wide"
+                      ? t.widthWide
+                      : t.widthFull}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
         <nav className="mt-2 flex gap-5 text-[15px]">
           {TABS.map((tab) => (

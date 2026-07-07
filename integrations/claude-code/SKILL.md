@@ -55,8 +55,18 @@ press Keep to retain one. When unsure, publish as keep — deleting is easy.
 
 - **Self-contained single file**: no external CDN/font/image requests. Inline CSS/JS;
   images as data URIs or inline SVG. 5MB limit.
-- **Mobile-first**: 390px base, `<meta name="viewport" content="width=device-width, initial-scale=1">`,
-  body max-width ~720px centered.
+- **Mobile-first, but not mobile-only**: design against a 390px base with
+  `<meta name="viewport" content="width=device-width, initial-scale=1">`, but never hardcode
+  a single flat `max-width` (e.g. `720px`) on the whole page — on a wide monitor that leaves
+  huge dead margins. Use a fluid wrapper instead, and keep long-form text readable inside it:
+  ```css
+  .page { max-width: min(94vw, 1100px); margin: 0 auto; padding: 24px clamp(16px, 4vw, 32px) 64px; }
+  p, li, blockquote { max-width: 72ch; }              /* prose stays readable even in a wide wrapper */
+  table, pre, .grid, .cards, img, svg { max-width: none; }  /* let wide elements use the full wrapper */
+  ```
+  Result: ~366px effective width on a 390px phone (same as before), but up to 1100px on desktop
+  instead of a narrow centered column — tables/dashboards/card grids get the extra room while
+  paragraphs don't stretch into unreadably long lines.
 - **Light/dark**: `:root { color-scheme: light dark }` + `prefers-color-scheme` styles for both.
 - **Wide content**: tables/code blocks/diagrams inside `overflow-x: auto` containers;
   the page itself must never scroll horizontally.

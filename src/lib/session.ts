@@ -66,3 +66,25 @@ export async function verifyRawSig(
   if (!Number.isFinite(exp) || exp < Date.now()) return false;
   return timingEq(sig, await signRawUrl(secret, id, exp));
 }
+
+/* Public share links — unlike /raw's per-view signature, these embed an
+ * epoch so the owner can revoke a link (bump the epoch) before it expires. */
+export async function signShareUrl(
+  secret: string,
+  id: string,
+  epoch: number,
+  exp: number,
+): Promise<string> {
+  return hmacHex(secret, `share.${id}.${epoch}.${exp}`);
+}
+
+export async function verifyShareSig(
+  secret: string,
+  id: string,
+  epoch: number,
+  exp: number,
+  sig: string,
+): Promise<boolean> {
+  if (!Number.isFinite(exp) || exp < Date.now()) return false;
+  return timingEq(sig, await signShareUrl(secret, id, epoch, exp));
+}
