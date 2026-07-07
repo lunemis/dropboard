@@ -4,10 +4,16 @@ import { SESSION_COOKIE, verifySessionToken } from "./lib/session";
 const PUBLIC_PATHS = ["/login", "/api/auth/login"];
 // /raw self-authenticates (signed URL / bearer / cookie) — see the route
 const RAW_RE = /^\/api\/items\/[^/]+\/raw$/;
+// public share page — self-authenticates via its own signed/epoch-checked query params
+const SHARE_RE = /^\/s\/[^/]+$/;
 
 export default async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  if (PUBLIC_PATHS.includes(pathname) || RAW_RE.test(pathname)) {
+  if (
+    PUBLIC_PATHS.includes(pathname) ||
+    RAW_RE.test(pathname) ||
+    SHARE_RE.test(pathname)
+  ) {
     return NextResponse.next();
   }
 

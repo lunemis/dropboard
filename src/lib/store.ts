@@ -180,6 +180,16 @@ export async function updateItem(
   return meta;
 }
 
+/** Invalidate all previously issued public share links for this item. */
+export async function revokeShares(id: string): Promise<ItemMeta | null> {
+  const meta = await getItem(id);
+  if (!meta) return null;
+  meta.share_epoch = (meta.share_epoch ?? 0) + 1;
+  meta.updated_at = now();
+  await writeMeta(meta);
+  return meta;
+}
+
 export async function deleteItem(id: string): Promise<boolean> {
   if (!isValidId(id)) return false;
   const meta = await readMeta(id);

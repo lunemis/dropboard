@@ -3,22 +3,38 @@ import { marked } from "marked";
 import {
   SESSION_COOKIE,
   verifyRawSig,
+  verifyShareSig,
   verifySessionToken,
 } from "../../../../../lib/session";
-import { readContent } from "../../../../../lib/store";
+import { getItem, readContent } from "../../../../../lib/store";
 
 type Ctx = { params: Promise<{ id: string }> };
 
 /* Bypassed by middleware — authenticates itself: signed URL (viewer iframe),
- * bearer token (CLI/AI), or session cookie (direct top-level open). */
+ * public share link (epoch-checked, revocable), bearer token (CLI/AI), or
+ * session cookie (direct top-level open). */
 async function isAuthorized(req: NextRequest, id: string): Promise<boolean> {
   const secret = process.env.DROPBOARD_SESSION_SECRET;
   if (!secret) return true; // auth not configured (bare dev)
 
   const sp = req.nextUrl.searchParams;
   const sig = sp.get("st");
-  if (sig && (await verifyRawSig(secret, id, Number(sp.get("e")), sig))) {
-    return true;
+  const exp = Number(sp.get("e"));
+  if (sig) {
+    const epRaw = sp.get("ep");
+    if (epRaw !== null) {
+      const epoch = Number(epRaw);
+      const item = await getItem(id);
+      if (
+        item &&
+        (item.share_epoch ?? 0) === epoch &&
+        (await verifyShareSig(secret, id, epoch, exp, sig))
+      ) {
+        return true;
+      }
+    } else if (await verifyRawSig(secret, id, exp, sig)) {
+      return true;
+    }
   }
   const token = process.env.DROPBOARD_TOKEN;
   if (token && req.headers.get("authorization") === `Bearer ${token}`) {
@@ -35,9 +51,16 @@ function escapeHtml(s: string): string {
   );
 }
 
+const SHELL_WIDTH_PX: Record<string, string> = {
+  narrow: "720px",
+  wide: "1100px",
+  full: "none",
+};
+
 /* Self-contained document shell for markdown items — mirrors the board palette. */
-function markdownShell(title: string, bodyHtml: string): string {
+function markdownShell(title: string, bodyHtml: string, width: string): string {
   const lang = process.env.NEXT_PUBLIC_DROPBOARD_LOCALE === "ko" ? "ko" : "en";
+  const maxWidth = SHELL_WIDTH_PX[width] ?? SHELL_WIDTH_PX.narrow;
   return `<!doctype html>
 <html lang="${lang}">
 <head>
@@ -60,7 +83,7 @@ function markdownShell(title: string, bodyHtml: string): string {
     font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
       Pretendard, "Segoe UI", "Malgun Gothic", sans-serif;
     background: var(--bg); color: var(--ink);
-    max-width: 720px; margin: 0 auto; padding: 28px 20px 64px;
+    max-width: ${maxWidth}; margin: 0 auto; padding: 28px 20px 64px;
     line-height: 1.75; font-size: 16px; word-break: keep-all;
     -webkit-font-smoothing: antialiased;
   }
@@ -101,11 +124,13 @@ export async function GET(req: NextRequest, ctx: Ctx) {
   if (!result) return new Response("not found", { status: 404 });
 
   const { meta, content } = result;
+  const width = req.nextUrl.searchParams.get("w") ?? "narrow";
   const html =
     meta.content_type === "markdown"
       ? markdownShell(
           meta.title,
           marked.parse(content, { gfm: true, async: false }),
+          width,
         )
       : content;
 

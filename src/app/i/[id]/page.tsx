@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArchiveIcon,
   KeepIcon,
@@ -18,6 +18,15 @@ const LIST_PATH: Record<ItemStatus, string> = {
   trash: "/trash",
 };
 
+type ViewerWidth = "narrow" | "wide" | "full";
+const VIEWER_WIDTH_KEY = "dropboard:viewer-width";
+const VIEWER_WIDTH_OPTIONS: ViewerWidth[] = ["narrow", "wide", "full"];
+
+interface ShareToast {
+  msg: string;
+  action?: { label: string; onClick: () => void };
+}
+
 export default function ViewerPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -25,6 +34,30 @@ export default function ViewerPage() {
   const [rawUrl, setRawUrl] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [viewerWidth, setViewerWidthState] = useState<ViewerWidth>("narrow");
+  const [shareToast, setShareToast] = useState<ShareToast | null>(null);
+  const [sharing, setSharing] = useState(false);
+  const shareToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const showShareToast = (toastValue: ShareToast | null) => {
+    if (shareToastTimer.current) clearTimeout(shareToastTimer.current);
+    setShareToast(toastValue);
+    if (toastValue) {
+      shareToastTimer.current = setTimeout(() => setShareToast(null), 5000);
+    }
+  };
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem(VIEWER_WIDTH_KEY);
+    if (stored && VIEWER_WIDTH_OPTIONS.includes(stored as ViewerWidth)) {
+      setViewerWidthState(stored as ViewerWidth);
+    }
+  }, []);
+
+  const setViewerWidth = (w: ViewerWidth) => {
+    setViewerWidthState(w);
+    window.localStorage.setItem(VIEWER_WIDTH_KEY, w);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -83,6 +116,38 @@ export default function ViewerPage() {
     if (item) setMeta(item);
   };
 
+  const revokeShare = async () => {
+    const res = await fetch(`/api/items/${id}/share`, { method: "DELETE" });
+    if (res.ok) showShareToast({ msg: t.toastShareRevoked });
+  };
+
+  const doShare = async () => {
+    if (sharing) return;
+    setSharing(true);
+    try {
+      const res = await fetch(`/api/items/${id}/share`, { method: "POST" });
+      if (!res.ok) {
+        showShareToast({ msg: t.toastShareFailed });
+        return;
+      }
+      const { url } = (await res.json()) as { url: string };
+      const full = /^https?:\/\//.test(url)
+        ? url
+        : `${window.location.origin}${url}`;
+      try {
+        await navigator.clipboard.writeText(full);
+      } catch {
+        // clipboard API unavailable — link is still shown via the toast fallback below
+      }
+      showShareToast({
+        msg: t.toastShareCopied,
+        action: { label: t.shareRevoke, onClick: revokeShare },
+      });
+    } finally {
+      setSharing(false);
+    }
+  };
+
   const destroyTemp = async () => {
     if (!confirming) {
       setConfirming(true);
@@ -121,6 +186,43 @@ export default function ViewerPage() {
         <h1 className="min-w-0 flex-1 truncate text-sm font-semibold">
           {meta?.title ?? ""}
         </h1>
+        {meta?.content_type === "markdown" && (
+          <div
+            className="hidden items-center gap-1 sm:flex"
+            role="group"
+            aria-label={t.widthLabel}
+          >
+            {VIEWER_WIDTH_OPTIONS.map((w) => (
+              <button
+                key={w}
+                onClick={() => setViewerWidth(w)}
+                title={t.widthLabel}
+                className={`rounded-full px-2.5 py-1 font-mono text-[11px] ${
+                  viewerWidth === w
+                    ? "bg-[var(--ink)] font-semibold text-[var(--bg)]"
+                    : "text-[var(--muted)]"
+                }`}
+              >
+                {w === "narrow"
+                  ? t.widthNarrow
+                  : w === "wide"
+                    ? t.widthWide
+                    : t.widthFull}
+              </button>
+            ))}
+          </div>
+        )}
+        {meta && (
+          <button
+            aria-label={t.actionShare}
+            title={t.actionShare}
+            disabled={sharing}
+            onClick={doShare}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--muted)] active:bg-[var(--surface-2)] disabled:opacity-50"
+          >
+            <ShareIcon />
+          </button>
+        )}
         {meta && meta.expires_at && (
           <div className="flex shrink-0 items-center gap-1">
             <span className="font-mono text-[11px] text-[var(--accent)]">
@@ -200,7 +302,11 @@ export default function ViewerPage() {
       {meta && rawUrl ? (
         <iframe
           sandbox="allow-scripts"
-          src={rawUrl}
+          src={
+            meta.content_type === "markdown"
+              ? `${rawUrl}${rawUrl.includes("?") ? "&" : "?"}w=${viewerWidth}`
+              : rawUrl
+          }
           title={meta.title}
           className="w-full flex-1 border-0 bg-white"
         />
@@ -209,6 +315,35 @@ export default function ViewerPage() {
           {t.loading}
         </p>
       )}
+      {shareToast && (
+        <div className="toast-in fixed inset-x-0 bottom-6 z-20 flex justify-center px-4">
+          <div className="flex items-center gap-4 rounded-full bg-[var(--ink)] px-5 py-3 text-sm text-[var(--bg)] shadow-lg">
+            <span>{shareToast.msg}</span>
+            {shareToast.action && (
+              <button
+                onClick={() => {
+                  shareToast.action?.onClick();
+                }}
+                className="text-[13px] font-semibold underline underline-offset-2"
+              >
+                {shareToast.action.label}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+function ShareIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="18" cy="5" r="3" />
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="19" r="3" />
+      <path d="M8.6 10.5 15.4 6.5" />
+      <path d="M8.6 13.5 15.4 17.5" />
+    </svg>
   );
 }

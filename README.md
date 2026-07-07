@@ -107,6 +107,8 @@ Each includes artifact quality rules (self-contained HTML, mobile-first, light/d
 - `DROPBOARD_DATA_DIR` (default `./data/items`) — item storage location
 - `DROPBOARD_TRASH_TTL_DAYS` (default `30`) — days before the built-in sweeper purges trash; `0` skips the trash purge (expired temp items are always swept)
 - `NEXT_PUBLIC_DROPBOARD_LOCALE` (default `en`) — UI language `en`/`ko` (build-time)
+- `DROPBOARD_PUBLIC_URL` (optional) — base URL used to build share links (see below). Without it, share
+  links use whatever host the request came in on — usually `localhost`, which is useless to anyone but you.
 
 ## Operating
 
@@ -114,9 +116,19 @@ Each includes artifact quality rules (self-contained HTML, mobile-first, light/d
 - **Trash cleanup**: automatic — a built-in sweeper runs inside the server every 15 minutes. Prefer an external schedule? Set `DROPBOARD_TRASH_TTL_DAYS=0` and cron `npm run cleanup` instead.
 - **Remote access**: put it behind your own tunnel/reverse proxy (Cloudflare Tunnel, Tailscale). Session cookies are marked `Secure` automatically when served over HTTPS.
 
+## Sharing an item
+
+Open any item and tap the share icon: it mints a signed public link (`/s/<id>?...`) good for 24 hours, copies it to your clipboard, and shows an option to deactivate it immediately. Anyone with the link can view that one item — no PIN required — but they can't browse your inbox, archive, or trash. Deactivating (or re-sharing, which rotates the link) invalidates every link issued before it, even ones that haven't expired yet.
+
+Set `DROPBOARD_PUBLIC_URL` so the copied link is actually reachable by whoever you're sharing with:
+- Same LAN only → your machine's LAN IP, e.g. `http://192.168.1.20:3000` (it's a DHCP address, so re-set this if it changes)
+- Anyone on the internet → a tunnel/reverse-proxy domain (Cloudflare Tunnel, Tailscale Funnel, ...)
+
+Without it, the link uses whatever host the request came in on, which is `localhost` for local browsing — that link only opens on your own machine.
+
 ## Security model
 
-Single-user by design. Three access paths: PIN → long-lived signed session cookie (UI); bearer token (API/CLI); short-lived signed URLs (artifact iframe, which sends no cookies due to sandboxing). Artifacts are rendered with `sandbox allow-scripts` and a CSP sandbox header — no cookie, storage, or parent-DOM access.
+Single-user by design. Access paths: PIN → long-lived signed session cookie (UI); bearer token (API/CLI); short-lived signed URLs (artifact iframe, which sends no cookies due to sandboxing); public share links (see above — epoch-checked so they're revocable, capped at 24h). Artifacts are rendered with `sandbox allow-scripts` and a CSP sandbox header — no cookie, storage, or parent-DOM access.
 
 ## License
 
