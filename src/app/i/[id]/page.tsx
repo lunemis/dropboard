@@ -11,6 +11,7 @@ import {
 } from "../../../components/Board";
 import { remainTime, t } from "../../../lib/i18n";
 import type { ItemMeta, ItemStatus } from "../../../lib/types";
+import { useStoredChoice } from "../../../lib/useStoredChoice";
 
 const LIST_PATH: Record<ItemStatus, string> = {
   inbox: "/",
@@ -33,8 +34,13 @@ export default function ViewerPage() {
   const [meta, setMeta] = useState<ItemMeta | null>(null);
   const [rawUrl, setRawUrl] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [confirming, setConfirming] = useState(false);
-  const [viewerWidth, setViewerWidthState] = useState<ViewerWidth>("narrow");
+  const [viewerWidth, setViewerWidth] = useStoredChoice(
+    VIEWER_WIDTH_KEY,
+    VIEWER_WIDTH_OPTIONS,
+    "narrow",
+  );
   const [shareToast, setShareToast] = useState<ShareToast | null>(null);
   const [sharing, setSharing] = useState(false);
   const shareToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -48,38 +54,31 @@ export default function ViewerPage() {
   };
 
   useEffect(() => {
-    const stored = window.localStorage.getItem(VIEWER_WIDTH_KEY);
-    if (stored && VIEWER_WIDTH_OPTIONS.includes(stored as ViewerWidth)) {
-      setViewerWidthState(stored as ViewerWidth);
-    }
-  }, []);
-
-  const setViewerWidth = (w: ViewerWidth) => {
-    setViewerWidthState(w);
-    window.localStorage.setItem(VIEWER_WIDTH_KEY, w);
-  };
-
-  useEffect(() => {
     let cancelled = false;
     (async () => {
-      const res = await fetch(`/api/items/${id}`, { cache: "no-store" });
-      if (!res.ok) {
-        if (!cancelled) setNotFound(true);
-        return;
-      }
-      const { item, raw_url } = (await res.json()) as {
-        item: ItemMeta;
-        raw_url?: string;
-      };
-      if (cancelled) return;
-      setMeta(item);
-      setRawUrl(raw_url ?? `/api/items/${id}/raw`);
-      if (!item.read_at) {
-        fetch(`/api/items/${id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ read: true }),
-        }).catch(() => {});
+      try {
+        const res = await fetch(`/api/items/${id}`, { cache: "no-store" });
+        if (res.status === 404) {
+          if (!cancelled) setNotFound(true);
+          return;
+        }
+        if (!res.ok) throw new Error(`load failed (${res.status})`);
+        const { item, raw_url } = (await res.json()) as {
+          item: ItemMeta;
+          raw_url?: string;
+        };
+        if (cancelled) return;
+        setMeta(item);
+        setRawUrl(raw_url ?? `/api/items/${id}/raw`);
+        if (!item.read_at) {
+          fetch(`/api/items/${id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ read: true }),
+          }).catch(() => {});
+        }
+      } catch {
+        if (!cancelled) setLoadFailed(true);
       }
     })();
     return () => {
@@ -88,37 +87,61 @@ export default function ViewerPage() {
   }, [id]);
 
   const patch = async (body: Record<string, unknown>) => {
-    const res = await fetch(`/api/items/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    if (!res.ok) return null;
-    const { item } = (await res.json()) as { item: ItemMeta };
-    return item;
+    try {
+      const res = await fetch(`/api/items/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) return null;
+      const { item } = (await res.json()) as { item: ItemMeta };
+      return item;
+    } catch {
+      return null;
+    }
   };
 
   const togglePin = async () => {
     if (!meta) return;
-    setMeta({ ...meta, pinned: !meta.pinned });
+    const previous = meta;
+    setMeta({ ...previous, pinned: !previous.pinned });
     const item = await patch({ pinned: !meta.pinned });
-    if (item) setMeta(item);
+    if (item) {
+      setMeta(item);
+    } else {
+      setMeta(previous);
+      showShareToast({ msg: t.toastFailed });
+    }
   };
 
   const moveTo = async (status: ItemStatus) => {
     if (!meta) return;
-    await patch({ status });
-    router.push(LIST_PATH[meta.status]);
+    const item = await patch({ status });
+    if (item) {
+      router.push(LIST_PATH[meta.status]);
+    } else {
+      showShareToast({ msg: t.toastFailed });
+    }
   };
 
   const keepItem = async () => {
     const item = await patch({ keep: true });
-    if (item) setMeta(item);
+    if (item) {
+      setMeta(item);
+    } else {
+      showShareToast({ msg: t.toastFailed });
+    }
   };
 
   const revokeShare = async () => {
-    const res = await fetch(`/api/items/${id}/share`, { method: "DELETE" });
-    if (res.ok) showShareToast({ msg: t.toastShareRevoked });
+    try {
+      const res = await fetch(`/api/items/${id}/share`, { method: "DELETE" });
+      showShareToast({
+        msg: res.ok ? t.toastShareRevoked : t.toastShareFailed,
+      });
+    } catch {
+      showShareToast({ msg: t.toastShareFailed });
+    }
   };
 
   const doShare = async () => {
@@ -143,6 +166,8 @@ export default function ViewerPage() {
         msg: t.toastShareCopied,
         action: { label: t.shareRevoke, onClick: revokeShare },
       });
+    } catch {
+      showShareToast({ msg: t.toastShareFailed });
     } finally {
       setSharing(false);
     }
@@ -154,14 +179,21 @@ export default function ViewerPage() {
       setTimeout(() => setConfirming(false), 3000);
       return;
     }
-    await fetch(`/api/items/${id}`, { method: "DELETE" });
-    router.push("/");
+    try {
+      const res = await fetch(`/api/items/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error(`delete failed (${res.status})`);
+      router.push("/");
+    } catch {
+      showShareToast({ msg: t.toastFailed });
+    }
   };
 
-  if (notFound) {
+  if (notFound || loadFailed) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3">
-        <p className="text-sm text-[var(--muted)]">{t.notFound}</p>
+        <p className="text-sm text-[var(--muted)]">
+          {loadFailed ? t.loadFailed : t.notFound}
+        </p>
         <Link href="/" className="text-sm font-semibold underline">
           {t.toInbox}
         </Link>

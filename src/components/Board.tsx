@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { relTime, remainTime, t, TYPE_LABELS } from "../lib/i18n";
 import type { ItemMeta, ItemStatus, ItemType } from "../lib/types";
+import { useStoredChoice } from "../lib/useStoredChoice";
 import { TypeSeal } from "./TypeSeal";
 
 const TABS: { href: string; label: string; status: ItemStatus }[] = [
@@ -39,43 +40,63 @@ function matchesQuery(item: ItemMeta, q: string): boolean {
   );
 }
 
+async function fetchItems(status: ItemStatus): Promise<ItemMeta[]> {
+  const res = await fetch(`/api/items?status=${status}`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`failed to load items (${res.status})`);
+  const data = (await res.json()) as { items?: ItemMeta[] };
+  return data.items ?? [];
+}
+
 export default function Board({ status }: { status: ItemStatus }) {
   const [items, setItems] = useState<ItemMeta[] | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [typeFilter, setTypeFilter] = useState<ItemType | "all">("all");
   const [query, setQuery] = useState("");
   const [toast, setToast] = useState<Toast | null>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const confirmTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [boardWidth, setBoardWidthState] = useState<BoardWidth>("narrow");
-
-  useEffect(() => {
-    const stored = window.localStorage.getItem(WIDTH_STORAGE_KEY);
-    if (stored && WIDTH_OPTIONS.includes(stored as BoardWidth)) {
-      setBoardWidthState(stored as BoardWidth);
-    }
-  }, []);
-
-  const setBoardWidth = useCallback((w: BoardWidth) => {
-    setBoardWidthState(w);
-    window.localStorage.setItem(WIDTH_STORAGE_KEY, w);
-  }, []);
+  const [now, setNow] = useState(0);
+  const [boardWidth, setBoardWidth] = useStoredChoice(
+    WIDTH_STORAGE_KEY,
+    WIDTH_OPTIONS,
+    "narrow",
+  );
 
   const load = useCallback(async () => {
     try {
-      const res = await fetch(`/api/items?status=${status}`, {
-        cache: "no-store",
-      });
-      const data = await res.json();
-      setItems(data.items ?? []);
+      setItems(await fetchItems(status));
+      setLoadFailed(false);
     } catch {
       setItems([]);
+      setLoadFailed(true);
     }
   }, [status]);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    let cancelled = false;
+    fetchItems(status)
+      .then((nextItems) => {
+        if (!cancelled) {
+          setItems(nextItems);
+          setLoadFailed(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setItems([]);
+          setLoadFailed(true);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [status]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const showToast = useCallback((toastValue: Toast) => {
     if (toastTimer.current) clearTimeout(toastTimer.current);
@@ -86,26 +107,33 @@ export default function Board({ status }: { status: ItemStatus }) {
   const move = useCallback(
     async (item: ItemMeta, to: ItemStatus, msg: string) => {
       setItems((prev) => prev?.filter((i) => i.id !== item.id) ?? null);
-      const res = await fetch(`/api/items/${item.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: to }),
-      });
-      if (!res.ok) {
+      try {
+        const res = await fetch(`/api/items/${item.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: to }),
+        });
+        if (!res.ok) throw new Error(`move failed (${res.status})`);
+      } catch {
         showToast({ msg: t.toastFailed });
-        load();
+        await load();
         return;
       }
       showToast({
         msg,
         undo: async () => {
           setToast(null);
-          await fetch(`/api/items/${item.id}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ status: item.status }),
-          });
-          load();
+          try {
+            const res = await fetch(`/api/items/${item.id}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ status: item.status }),
+            });
+            if (!res.ok) throw new Error(`undo failed (${res.status})`);
+            await load();
+          } catch {
+            showToast({ msg: t.toastFailed });
+          }
         },
       });
     },
@@ -114,17 +142,19 @@ export default function Board({ status }: { status: ItemStatus }) {
 
   const keep = useCallback(
     async (item: ItemMeta) => {
-      const res = await fetch(`/api/items/${item.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ keep: true }),
-      });
-      if (!res.ok) {
+      try {
+        const res = await fetch(`/api/items/${item.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ keep: true }),
+        });
+        if (!res.ok) throw new Error(`keep failed (${res.status})`);
+      } catch {
         showToast({ msg: t.toastFailed });
         return;
       }
       showToast({ msg: t.toastKept });
-      load();
+      await load();
     },
     [load, showToast],
   );
@@ -139,10 +169,12 @@ export default function Board({ status }: { status: ItemStatus }) {
       }
       setConfirmingId(null);
       setItems((prev) => prev?.filter((i) => i.id !== item.id) ?? null);
-      const res = await fetch(`/api/items/${item.id}`, { method: "DELETE" });
-      if (!res.ok) {
+      try {
+        const res = await fetch(`/api/items/${item.id}`, { method: "DELETE" });
+        if (!res.ok) throw new Error(`delete failed (${res.status})`);
+      } catch {
         showToast({ msg: t.toastFailed });
-        load();
+        await load();
         return;
       }
       showToast({ msg: t.toastDeleted });
@@ -150,7 +182,6 @@ export default function Board({ status }: { status: ItemStatus }) {
     [confirmingId, load, showToast],
   );
 
-  const now = Date.now();
   const visible =
     items?.filter(
       (i) =>
@@ -378,7 +409,11 @@ export default function Board({ status }: { status: ItemStatus }) {
       )}
 
       <main className="flex-1 px-4 pb-24">
-        {visible === null ? (
+        {loadFailed ? (
+          <p className="py-16 text-center text-sm text-[var(--muted)]">
+            {t.loadFailed}
+          </p>
+        ) : visible === null ? (
           <p className="py-16 text-center text-sm text-[var(--muted)]">
             {t.loading}
           </p>
