@@ -29,7 +29,24 @@
     "typescript": "^5"
   },
   "description": "Self-hosted review board for AI-generated deliverables",
+  "keywords": [
+    "ai-agents",
+    "self-hosted",
+    "review",
+    "artifacts"
+  ],
   "license": "MIT",
+  "engines": {
+    "node": ">=20.9.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lunemis/dropboard.git"
+  },
+  "homepage": "https://github.com/lunemis/dropboard#readme",
+  "bugs": {
+    "url": "https://github.com/lunemis/dropboard/issues"
+  },
   "bin": {
     "dropboard": "bin/dropboard.mjs"
   }

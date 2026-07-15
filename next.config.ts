@@ -1,14 +1,21 @@
 import type { NextConfig } from "next";
-import path from "node:path";
 
 const nextConfig: NextConfig = {
-  // Pin the file-tracing root to this project. Without it, Next.js walks up the
-  // directory tree and can pick a parent folder as the workspace root when an
-  // unrelated lockfile lives above the repo (e.g. cloning into ~/git alongside
-  // other projects), emitting a scary "inferred workspace root" warning on an
-  // otherwise-clean build. It also keeps the production file trace scoped to the
-  // project instead of the whole parent tree.
-  outputFileTracingRoot: path.join(__dirname),
+  output: "standalone",
+  turbopack: {
+    // The filesystem-backed store intentionally resolves its data directory at
+    // runtime. Turbopack reports that trace as the project config file even
+    // though project sources are excluded from route traces below.
+    ignoreIssue: [
+      {
+        path: "**/next.config.ts",
+        title: "Encountered unexpected file in NFT list",
+      },
+    ],
+  },
+  outputFileTracingExcludes: {
+    "/*": ["./next.config.ts", "./data/**/*", "./tests/**/*"],
+  },
 };
 
 export default nextConfig;

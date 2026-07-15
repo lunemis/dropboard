@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { isUnsafeNoAuthEnabled } from "./lib/config";
 import { SESSION_COOKIE, verifySessionToken } from "./lib/session";
 
-const PUBLIC_PATHS = ["/login", "/api/auth/login"];
+const PUBLIC_PATHS = ["/login", "/api/auth/login", "/api/health"];
 // /raw self-authenticates (signed URL / bearer / cookie) — see the route
 const RAW_RE = /^\/api\/items\/[^/]+\/raw$/;
 // public share page — self-authenticates via its own signed/epoch-checked query params

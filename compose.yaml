@@ -1,0 +1,21 @@
+services:
+  dropboard:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_DROPBOARD_LOCALE: ${NEXT_PUBLIC_DROPBOARD_LOCALE:-en}
+    ports:
+      - "${DROPBOARD_PORT:-3000}:3000"
+    environment:
+      DROPBOARD_TOKEN: ${DROPBOARD_TOKEN:?set DROPBOARD_TOKEN}
+      DROPBOARD_PIN: ${DROPBOARD_PIN:?set DROPBOARD_PIN}
+      DROPBOARD_SESSION_SECRET: ${DROPBOARD_SESSION_SECRET:?set DROPBOARD_SESSION_SECRET}
+      DROPBOARD_TRASH_TTL_DAYS: ${DROPBOARD_TRASH_TTL_DAYS:-30}
+      DROPBOARD_PUBLIC_URL: ${DROPBOARD_PUBLIC_URL:-}
+    volumes:
+      - dropboard-data:/data
+    restart: unless-stopped
+
+volumes:
+  dropboard-data:
+

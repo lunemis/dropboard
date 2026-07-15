@@ -19,6 +19,14 @@ test("returns 503 instead of opening APIs when auth is unconfigured", async () =
   assert.equal(response.status, 503);
 });
 
+test("keeps the health endpoint public", async () => {
+  delete process.env.DROPBOARD_SESSION_SECRET;
+  const response = await proxy(
+    new NextRequest("http://localhost/api/health"),
+  );
+  assert.equal(response.status, 200);
+});
+
 test("explicit development no-auth mode bypasses the proxy", async () => {
   process.env.NODE_ENV = "development";
   process.env.DROPBOARD_UNSAFE_NO_AUTH = "true";
@@ -43,4 +51,3 @@ test("accepts a valid session and rejects a missing session", async () => {
   );
   assert.equal(allowed.status, 200);
 });
-

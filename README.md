@@ -70,6 +70,27 @@ dropboard publish notes.md --type info --summary "first item"
 
 Open the board, log in with your PIN, review.
 
+### Docker Compose
+
+For a production-style local deployment with persistent storage:
+
+```bash
+cat > .env <<EOF
+DROPBOARD_TOKEN=$(openssl rand -hex 24)
+DROPBOARD_PIN=123456
+DROPBOARD_SESSION_SECRET=$(openssl rand -hex 32)
+NEXT_PUBLIC_DROPBOARD_LOCALE=en
+EOF
+
+docker compose up --build -d
+```
+
+Open `http://localhost:3000`. Items are stored in the `dropboard-data` Docker
+volume and survive container replacement. Change `DROPBOARD_PORT` in `.env` to
+publish a different host port. The locale is applied at image build time, so
+rebuild after changing it. The unauthenticated `/api/health` endpoint is
+available for container and reverse-proxy health checks.
+
 ## Publishing
 
 ```bash
@@ -115,7 +136,7 @@ Each includes artifact quality rules (self-contained HTML, mobile-first, light/d
 
 ## Operating
 
-- **Production**: `npm run build && npm run start -- -p <port>` under any supervisor (launchd, systemd, pm2, Docker).
+- **Production**: use `docker compose up --build -d`, or run `npm run build && npm run start -- -p <port>` under a supervisor (launchd, systemd, pm2).
 - **Trash cleanup**: automatic — a built-in sweeper runs inside the server every 15 minutes. Prefer an external schedule? Run the server with `DROPBOARD_TRASH_TTL_DAYS=0`, then set the desired retention explicitly in cron, for example `DROPBOARD_TRASH_TTL_DAYS=30 npm run cleanup`.
 - **Remote access**: put it behind your own tunnel/reverse proxy (Cloudflare Tunnel, Tailscale). Session cookies are marked `Secure` automatically when served over HTTPS.
 

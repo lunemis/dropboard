@@ -10,8 +10,7 @@ import {
   type ItemType,
 } from "./types";
 
-const DATA_DIR =
-  process.env.DROPBOARD_DATA_DIR ?? path.join(process.cwd(), "data", "items");
+const DATA_DIR = process.env.DROPBOARD_DATA_DIR || "./data/items";
 
 const ID_RE = /^\d{8}-\d{6}-[a-z0-9]{4}$/;
 const itemLocks = new Map<string, Promise<void>>();
@@ -76,7 +75,10 @@ async function withItemLock<T>(id: string, task: () => Promise<T>): Promise<T> {
 
 async function readMeta(id: string): Promise<ItemMeta | null> {
   try {
-    const raw = await fs.readFile(path.join(itemDir(id), "meta.json"), "utf8");
+    const raw = await fs.readFile(
+      path.join(itemDir(id), "meta.json"),
+      "utf8",
+    );
     const parsed: unknown = JSON.parse(raw);
     if (!isItemMeta(parsed, id)) {
       console.warn(`[dropboard] ignoring invalid metadata for item ${id}`);
@@ -224,7 +226,10 @@ export async function createItem(input: CreateItemInput): Promise<ItemMeta> {
     await writeMeta(meta);
     return meta;
   } catch (error) {
-    await fs.rm(itemDir(id), { recursive: true, force: true });
+    await fs.rm(itemDir(id), {
+      recursive: true,
+      force: true,
+    });
     throw error;
   }
 }
@@ -286,7 +291,10 @@ export async function deleteItem(id: string): Promise<boolean> {
   return withItemLock(id, async () => {
     const meta = await readMeta(id);
     if (!meta) return false;
-    await fs.rm(itemDir(id), { recursive: true, force: true });
+    await fs.rm(itemDir(id), {
+      recursive: true,
+      force: true,
+    });
     return true;
   });
 }
@@ -317,7 +325,10 @@ export async function sweepStorage(
         Boolean(meta.trashed_at) &&
         new Date(meta.trashed_at!).getTime() <= trashCutoff;
       if (!expiredTemp && !staleTrash) return false;
-      await fs.rm(itemDir(id), { recursive: true, force: true });
+      await fs.rm(itemDir(id), {
+        recursive: true,
+        force: true,
+      });
       return true;
     });
     if (didRemove) removed++;
