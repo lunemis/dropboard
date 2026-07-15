@@ -38,7 +38,7 @@ Because that's the whole gesture: your agents **drop** deliverables on a **board
 - **Agent-agnostic.** Anything that can run a CLI or hit a REST endpoint can publish: Claude Code, Codex, Cursor, aider, your own scripts. Ready-made skill/prompt files are included in [`integrations/`](integrations/).
 - **Built for review, not chat.** An inbox with unread markers, type seals (review / decision / report / info / fun), pinning, archive and trash with undo — the lifecycle a deliverable actually has. Chat transcripts and vendor artifact panes have none of this.
 - **Ephemeral when you want it.** `--temp` items expire on their own (default 2h) — "just show me this as HTML" stops polluting your inbox, and one tap keeps the ones worth saving.
-- **Self-hosted and private.** Your deliverables never leave your machine. PIN login for the UI, bearer token for the publish API, and every artifact renders inside a sandboxed iframe with a CSP — AI-generated JS can't touch your session.
+- **Self-hosted and private.** Your deliverables never leave your machine. PIN login for the UI, bearer token for the publish API, and every artifact renders inside a sandboxed iframe with a CSP — AI-generated JS can't touch your session or make external network requests.
 - **Zero infrastructure.** No database. Each item is a folder: `meta.json` + one HTML/Markdown file. Backup is `cp -r`, search is `grep`, migration is `mv`. The only runtime dependency is a markdown renderer.
 - **Full-fidelity artifacts.** Agents can publish quick markdown notes (rendered with a clean document template) or fully interactive HTML pages with inline JS — charts, toggles, simulations all work.
 
@@ -170,7 +170,7 @@ Without it, the link uses whatever host the request came in on, which is `localh
 
 ## Security model
 
-Single-user by design. Access paths: PIN → long-lived signed session cookie (UI); bearer token (API/CLI); short-lived signed URLs (artifact iframe, which sends no cookies due to sandboxing); public share links (see above — epoch-checked so they're revocable, capped at 24h). Artifacts are rendered with `sandbox allow-scripts` and a CSP sandbox header — no cookie, storage, or parent-DOM access.
+Single-user by design. Access paths: PIN → long-lived signed session cookie (UI); bearer token (API/CLI); short-lived signed URLs (artifact iframe, which sends no cookies due to sandboxing); public share links (see above — epoch-checked so they're revocable, capped at 24h). Artifacts are rendered with `sandbox allow-scripts` and a restrictive CSP — no cookie, storage, parent-DOM, form submission, or external network access. Inline CSS/JS and embedded `data:`/`blob:` media remain available for self-contained interactive artifacts.
 
 ## License
 

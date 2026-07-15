@@ -58,6 +58,21 @@ const SHELL_WIDTH_PX: Record<string, string> = {
   full: "none",
 };
 
+const ARTIFACT_CSP = [
+  "default-src 'none'",
+  "script-src 'unsafe-inline'",
+  "style-src 'unsafe-inline'",
+  "img-src data: blob:",
+  "font-src data:",
+  "media-src data: blob:",
+  "connect-src 'none'",
+  "frame-src 'none'",
+  "object-src 'none'",
+  "base-uri 'none'",
+  "form-action 'none'",
+  "sandbox allow-scripts",
+].join("; ");
+
 /* Self-contained document shell for markdown items — mirrors the board palette. */
 function markdownShell(title: string, bodyHtml: string, width: string): string {
   const lang = process.env.NEXT_PUBLIC_DROPBOARD_LOCALE === "ko" ? "ko" : "en";
@@ -138,8 +153,10 @@ export async function GET(req: NextRequest, ctx: Ctx) {
   return new Response(html, {
     headers: {
       "Content-Type": "text/html; charset=utf-8",
-      // defense in depth: sandboxed even when opened outside the viewer iframe
-      "Content-Security-Policy": "sandbox allow-scripts",
+      // Defense in depth: isolate scripts and prevent generated artifacts from
+      // sending data off the server, even when raw content is opened directly.
+      "Content-Security-Policy": ARTIFACT_CSP,
+      "Referrer-Policy": "no-referrer",
       "X-Content-Type-Options": "nosniff",
       "Cache-Control": "private, no-store",
     },
