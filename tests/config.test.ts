@@ -29,6 +29,9 @@ test("fails closed when required authentication values are missing", () => {
 });
 
 test("allows explicit no-auth mode only outside production", () => {
+  delete process.env.DROPBOARD_TOKEN;
+  delete process.env.DROPBOARD_PIN;
+  delete process.env.DROPBOARD_SESSION_SECRET;
   process.env.NODE_ENV = "development";
   process.env.DROPBOARD_UNSAFE_NO_AUTH = "true";
   assert.equal(isUnsafeNoAuthEnabled(), true);
@@ -38,4 +41,3 @@ test("allows explicit no-auth mode only outside production", () => {
   assert.equal(isUnsafeNoAuthEnabled(), false);
   assert.throws(validateServerConfig);
 });
-
