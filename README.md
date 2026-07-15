@@ -2,7 +2,7 @@
 
 **A self-hosted review board for AI-generated deliverables.**
 
-![MIT license](https://img.shields.io/badge/license-MIT-2ea44f) ![Works with any agent](https://img.shields.io/badge/agents-Claude%20Code%20·%20Codex%20·%20any-5b7db1) ![No database](https://img.shields.io/badge/database-none-c2472f)
+[![CI](https://github.com/lunemis/dropboard/actions/workflows/ci.yml/badge.svg)](https://github.com/lunemis/dropboard/actions/workflows/ci.yml) ![MIT license](https://img.shields.io/badge/license-MIT-2ea44f) ![Works with any agent](https://img.shields.io/badge/agents-Claude%20Code%20·%20Codex%20·%20any-5b7db1) ![No database](https://img.shields.io/badge/database-none-c2472f)
 
 Your coding agent writes a design doc, a comparison table, a research report — and dumps it into the chat, where it's unreadable on your phone and lost in scrollback by tomorrow. dropboard gives agents one command to publish that deliverable as a real web page, and gives you a mobile-friendly inbox to read, keep, or let expire.
 
@@ -111,6 +111,10 @@ curl -X POST $URL/api/items \
   -d '{"title":"...","type":"review","summary":"...","content":"<!doctype html>...","content_type":"html"}'
 ```
 
+`GET /api/items` accepts `status`, `type`, `project`, `q`, `limit` (1–500),
+and `offset`. Responses include `items`, `total`, `limit`, `offset`, and
+`has_more`.
+
 ## Agent integration
 
 The point of dropboard is that you say "put it on the board" and it happens. See [`integrations/`](integrations/):
@@ -196,3 +200,6 @@ Single-user by design. Access paths: PIN → long-lived signed session cookie (U
 ## License
 
 [MIT](LICENSE)
+
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) and report
+security issues according to [SECURITY.md](SECURITY.md).

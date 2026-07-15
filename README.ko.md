@@ -2,7 +2,7 @@
 
 **AI 산출물을 위한 셀프호스팅 리뷰 보드.**
 
-![MIT license](https://img.shields.io/badge/license-MIT-2ea44f) ![Works with any agent](https://img.shields.io/badge/agents-Claude%20Code%20·%20Codex%20·%20any-5b7db1) ![No database](https://img.shields.io/badge/database-none-c2472f)
+[![CI](https://github.com/lunemis/dropboard/actions/workflows/ci.yml/badge.svg)](https://github.com/lunemis/dropboard/actions/workflows/ci.yml) ![MIT license](https://img.shields.io/badge/license-MIT-2ea44f) ![Works with any agent](https://img.shields.io/badge/agents-Claude%20Code%20·%20Codex%20·%20any-5b7db1) ![No database](https://img.shields.io/badge/database-none-c2472f)
 
 코딩 에이전트가 설계 문서, 비교 분석, 리서치 리포트를 만들어서 — 채팅창에 쏟아냅니다. 폰에서는 읽기 힘들고, 내일이면 스크롤 속으로 사라지죠. dropboard는 에이전트에게 그 산출물을 제대로 된 웹페이지로 게시하는 명령 하나를 주고, 당신에게는 읽고·남기고·흘려보낼 수 있는 모바일 친화적인 받은함을 줍니다.
 
@@ -117,6 +117,10 @@ curl -X POST $URL/api/items \
   -d '{"title":"...","type":"review","summary":"...","content":"<!doctype html>...","content_type":"html"}'
 ```
 
+`GET /api/items`는 `status`, `type`, `project`, `q`, `limit`(1–500),
+`offset`을 받습니다. 응답에는 `items`, `total`, `limit`, `offset`,
+`has_more`가 포함됩니다.
+
 ## 에이전트 연동
 
 dropboard의 핵심은 "board에 올려줘" 한 마디로 게시가 끝나는 것입니다. [`integrations/`](integrations/)를 참고하세요:
@@ -200,3 +204,6 @@ sh.Run "cmd /c npm run start >> ""dropboard.log"" 2>&1", 0, False
 ## 라이선스
 
 [MIT](LICENSE)
+
+기여 방법은 [CONTRIBUTING.md](CONTRIBUTING.md), 보안 문제 제보 방법은
+[SECURITY.md](SECURITY.md)를 참고하세요.
