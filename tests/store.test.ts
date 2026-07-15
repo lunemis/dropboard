@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { after, before, test } from "node:test";
@@ -67,4 +67,38 @@ test("zero trash TTL preserves trash while expired temp items are swept", async 
   assert.deepEqual(await store.sweepStorage(0), { removed: 1 });
   assert.ok(await store.getItem(trash.id));
   assert.equal(await store.getItem(temp.id), null);
+});
+
+test("serializes concurrent metadata updates without losing fields", async () => {
+  const item = await store.createItem({
+    title: "Concurrent",
+    type: "decision",
+    content: "concurrent",
+  });
+  await Promise.all([
+    store.updateItem(item.id, { pinned: true }),
+    store.updateItem(item.id, { read: true }),
+    store.updateItem(item.id, { status: "archived" }),
+  ]);
+  const updated = await store.getItem(item.id);
+  assert.equal(updated?.pinned, true);
+  assert.ok(updated?.read_at);
+  assert.equal(updated?.status, "archived");
+});
+
+test("ignores malformed metadata and unsafe content paths", async () => {
+  const id = "20260101-000000-bad1";
+  const dir = path.join(dataDir, id);
+  await mkdir(dir);
+  await writeFile(
+    path.join(dir, "meta.json"),
+    JSON.stringify({ id, content_type: "html", content_file: "../secret" }),
+  );
+  const originalWarn = console.warn;
+  console.warn = () => {};
+  try {
+    assert.equal(await store.getItem(id), null);
+  } finally {
+    console.warn = originalWarn;
+  }
 });

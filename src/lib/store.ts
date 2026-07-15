@@ -1,11 +1,20 @@
 import { promises as fs } from "node:fs";
+import { randomUUID } from "node:crypto";
 import path from "node:path";
-import type { CreateItemInput, ItemMeta, ItemStatus, ItemType } from "./types";
+import {
+  ITEM_STATUSES,
+  ITEM_TYPES,
+  type CreateItemInput,
+  type ItemMeta,
+  type ItemStatus,
+  type ItemType,
+} from "./types";
 
 const DATA_DIR =
   process.env.DROPBOARD_DATA_DIR ?? path.join(process.cwd(), "data", "items");
 
 const ID_RE = /^\d{8}-\d{6}-[a-z0-9]{4}$/;
+const itemLocks = new Map<string, Promise<void>>();
 
 export function isValidId(id: string): boolean {
   return ID_RE.test(id);
@@ -19,21 +28,88 @@ function now(): string {
   return new Date().toISOString();
 }
 
+function isItemMeta(value: unknown, expectedId: string): value is ItemMeta {
+  if (!value || typeof value !== "object") return false;
+  const meta = value as Record<string, unknown>;
+  const contentType = meta.content_type;
+  const expectedContentFile =
+    contentType === "markdown"
+      ? "index.md"
+      : contentType === "html"
+        ? "index.html"
+        : null;
+  return (
+    meta.id === expectedId &&
+    typeof meta.title === "string" &&
+    ITEM_TYPES.includes(meta.type as ItemType) &&
+    (meta.project === null || typeof meta.project === "string") &&
+    Array.isArray(meta.tags) &&
+    meta.tags.every((tag) => typeof tag === "string") &&
+    typeof meta.summary === "string" &&
+    meta.content_file === expectedContentFile &&
+    ITEM_STATUSES.includes(meta.status as ItemStatus) &&
+    typeof meta.pinned === "boolean" &&
+    (meta.read_at === null || typeof meta.read_at === "string") &&
+    (meta.trashed_at === null || typeof meta.trashed_at === "string") &&
+    typeof meta.created_at === "string" &&
+    typeof meta.updated_at === "string" &&
+    typeof meta.source === "string"
+  );
+}
+
+async function withItemLock<T>(id: string, task: () => Promise<T>): Promise<T> {
+  const previous = itemLocks.get(id) ?? Promise.resolve();
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const tail = previous.then(() => gate);
+  itemLocks.set(id, tail);
+  await previous;
+  try {
+    return await task();
+  } finally {
+    release();
+    if (itemLocks.get(id) === tail) itemLocks.delete(id);
+  }
+}
+
 async function readMeta(id: string): Promise<ItemMeta | null> {
   try {
     const raw = await fs.readFile(path.join(itemDir(id), "meta.json"), "utf8");
-    return JSON.parse(raw) as ItemMeta;
-  } catch {
+    const parsed: unknown = JSON.parse(raw);
+    if (!isItemMeta(parsed, id)) {
+      console.warn(`[dropboard] ignoring invalid metadata for item ${id}`);
+      return null;
+    }
+    return parsed;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+      console.warn(
+        `[dropboard] cannot read metadata for item ${id}:`,
+        error instanceof Error ? error.message : String(error),
+      );
+    }
     return null;
   }
 }
 
 async function writeMeta(meta: ItemMeta): Promise<void> {
-  await fs.writeFile(
-    path.join(itemDir(meta.id), "meta.json"),
-    JSON.stringify(meta, null, 2) + "\n",
-    "utf8",
-  );
+  const destination = path.join(itemDir(meta.id), "meta.json");
+  const temporary = path.join(itemDir(meta.id), `.meta-${randomUUID()}.tmp`);
+  const handle = await fs.open(temporary, "wx");
+  try {
+    try {
+      await handle.writeFile(JSON.stringify(meta, null, 2) + "\n", "utf8");
+      await handle.sync();
+    } finally {
+      await handle.close();
+    }
+    await fs.rename(temporary, destination);
+  } catch (error) {
+    await fs.rm(temporary, { force: true });
+    throw error;
+  }
 }
 
 export interface ListFilter {
@@ -139,9 +215,18 @@ export async function createItem(input: CreateItemInput): Promise<ItemMeta> {
     source: input.source ?? "unknown",
   };
 
-  await fs.writeFile(path.join(itemDir(id), contentFile), input.content, "utf8");
-  await writeMeta(meta);
-  return meta;
+  try {
+    await fs.writeFile(
+      path.join(itemDir(id), contentFile),
+      input.content,
+      "utf8",
+    );
+    await writeMeta(meta);
+    return meta;
+  } catch (error) {
+    await fs.rm(itemDir(id), { recursive: true, force: true });
+    throw error;
+  }
 }
 
 export interface UpdatePatch {
@@ -158,44 +243,52 @@ export async function updateItem(
   id: string,
   patch: UpdatePatch,
 ): Promise<ItemMeta | null> {
-  const meta = await getItem(id);
-  if (!meta) return null;
+  if (!isValidId(id)) return null;
+  return withItemLock(id, async () => {
+    const meta = await getItem(id);
+    if (!meta) return null;
 
-  if (patch.status && patch.status !== meta.status) {
-    meta.status = patch.status;
-    meta.trashed_at = patch.status === "trash" ? now() : null;
-  }
-  if (typeof patch.pinned === "boolean") meta.pinned = patch.pinned;
-  if (patch.read === true && !meta.read_at) meta.read_at = now();
-  if (patch.read === false) meta.read_at = null;
-  if (patch.keep === true) meta.expires_at = null;
-  if (patch.ttl_minutes) {
-    meta.expires_at = new Date(
-      Date.now() + patch.ttl_minutes * 60000,
-    ).toISOString();
-  }
+    if (patch.status && patch.status !== meta.status) {
+      meta.status = patch.status;
+      meta.trashed_at = patch.status === "trash" ? now() : null;
+    }
+    if (typeof patch.pinned === "boolean") meta.pinned = patch.pinned;
+    if (patch.read === true && !meta.read_at) meta.read_at = now();
+    if (patch.read === false) meta.read_at = null;
+    if (patch.keep === true) meta.expires_at = null;
+    if (patch.ttl_minutes) {
+      meta.expires_at = new Date(
+        Date.now() + patch.ttl_minutes * 60000,
+      ).toISOString();
+    }
 
-  meta.updated_at = now();
-  await writeMeta(meta);
-  return meta;
+    meta.updated_at = now();
+    await writeMeta(meta);
+    return meta;
+  });
 }
 
 /** Invalidate all previously issued public share links for this item. */
 export async function revokeShares(id: string): Promise<ItemMeta | null> {
-  const meta = await getItem(id);
-  if (!meta) return null;
-  meta.share_epoch = (meta.share_epoch ?? 0) + 1;
-  meta.updated_at = now();
-  await writeMeta(meta);
-  return meta;
+  if (!isValidId(id)) return null;
+  return withItemLock(id, async () => {
+    const meta = await getItem(id);
+    if (!meta) return null;
+    meta.share_epoch = (meta.share_epoch ?? 0) + 1;
+    meta.updated_at = now();
+    await writeMeta(meta);
+    return meta;
+  });
 }
 
 export async function deleteItem(id: string): Promise<boolean> {
   if (!isValidId(id)) return false;
-  const meta = await readMeta(id);
-  if (!meta) return false;
-  await fs.rm(itemDir(id), { recursive: true, force: true });
-  return true;
+  return withItemLock(id, async () => {
+    const meta = await readMeta(id);
+    if (!meta) return false;
+    await fs.rm(itemDir(id), { recursive: true, force: true });
+    return true;
+  });
 }
 
 /**
@@ -214,17 +307,20 @@ export async function sweepStorage(
   }
   let removed = 0;
   for (const id of entries.filter(isValidId)) {
-    const meta = await readMeta(id);
-    if (!meta) continue;
-    const expiredTemp = isExpired(meta);
-    const staleTrash =
-      trashTtlDays > 0 &&
-      meta.status === "trash" &&
-      Boolean(meta.trashed_at) &&
-      new Date(meta.trashed_at!).getTime() <= trashCutoff;
-    if (!expiredTemp && !staleTrash) continue;
-    await fs.rm(itemDir(id), { recursive: true, force: true });
-    removed++;
+    const didRemove = await withItemLock(id, async () => {
+      const meta = await readMeta(id);
+      if (!meta) return false;
+      const expiredTemp = isExpired(meta);
+      const staleTrash =
+        trashTtlDays > 0 &&
+        meta.status === "trash" &&
+        Boolean(meta.trashed_at) &&
+        new Date(meta.trashed_at!).getTime() <= trashCutoff;
+      if (!expiredTemp && !staleTrash) return false;
+      await fs.rm(itemDir(id), { recursive: true, force: true });
+      return true;
+    });
+    if (didRemove) removed++;
   }
   return { removed };
 }
