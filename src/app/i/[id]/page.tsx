@@ -9,6 +9,7 @@ import {
   RestoreIcon,
   TrashIcon,
 } from "../../../components/Board";
+import { BrandMark } from "../../../components/Brand";
 import { remainTime, t } from "../../../lib/i18n";
 import type { ItemMeta, ItemStatus } from "../../../lib/types";
 import { useStoredChoice } from "../../../lib/useStoredChoice";
@@ -215,6 +216,7 @@ export default function ViewerPage() {
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </button>
+        <BrandMark className="mr-2 hidden h-6 w-6 sm:block" />
         <h1 className="min-w-0 flex-1 truncate text-sm font-semibold">
           {meta?.title ?? ""}
         </h1>

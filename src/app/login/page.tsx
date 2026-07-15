@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Brand } from "../../components/Brand";
 import { t } from "../../lib/i18n";
 
 export default function LoginPage() {
@@ -56,8 +57,8 @@ export default function LoginPage() {
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-8 px-6">
-      <h1 className="font-mono text-2xl font-bold tracking-tight">
-        dropboard<span className="text-[var(--accent)]">_</span>
+      <h1>
+        <Brand />
       </h1>
 
       <label className="flex flex-col items-center gap-4">

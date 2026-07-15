@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { relTime, remainTime, t, TYPE_LABELS } from "../lib/i18n";
 import type { ItemMeta, ItemStatus, ItemType } from "../lib/types";
 import { useStoredChoice } from "../lib/useStoredChoice";
+import { Brand } from "./Brand";
 import { TypeSeal } from "./TypeSeal";
 
 const TABS: { href: string; label: string; status: ItemStatus }[] = [
@@ -328,8 +329,8 @@ export default function Board({ status }: { status: ItemStatus }) {
     >
       <header className="sticky top-0 z-10 border-b border-[var(--line)] bg-[var(--bg)]/90 px-4 pt-4 backdrop-blur">
         <div className="flex items-baseline justify-between">
-          <h1 className="font-mono text-lg font-bold tracking-tight">
-            dropboard<span className="text-[var(--accent)]">_</span>
+          <h1>
+            <Brand compact />
           </h1>
           <div className="flex items-center gap-3">
             {unreadCount > 0 && (
