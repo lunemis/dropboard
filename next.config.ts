@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: "standalone",
+  output:
+    process.env.DROPBOARD_BUILD_STANDALONE === "true"
+      ? "standalone"
+      : undefined,
   turbopack: {
     // The filesystem-backed store intentionally resolves its data directory at
     // runtime. Turbopack reports that trace as the project config file even

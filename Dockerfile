@@ -9,6 +9,7 @@ COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
 ARG NEXT_PUBLIC_DROPBOARD_LOCALE=en
 ENV NEXT_PUBLIC_DROPBOARD_LOCALE=$NEXT_PUBLIC_DROPBOARD_LOCALE
+ENV DROPBOARD_BUILD_STANDALONE=true
 RUN npm run build
 
 FROM node:24-alpine AS runner
