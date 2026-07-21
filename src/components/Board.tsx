@@ -8,13 +8,14 @@ import {
   type CategorySettings,
 } from "../lib/categories";
 import { relTime, remainTime, t } from "../lib/i18n";
-import {
-  buildLibraryIndex,
-  matchesLibrarySelection,
-} from "../lib/library";
+import { buildLibraryIndex, matchesLibrarySelection } from "../lib/library";
 import type { ItemMeta, ItemStatus, ItemType } from "../lib/types";
 import { useStoredChoice } from "../lib/useStoredChoice";
 import { Brand } from "./Brand";
+import {
+  BulkOrganizerDialog,
+  type BulkOrganizationValues,
+} from "./BulkOrganizerDialog";
 import { LibraryNavigator } from "./LibraryNavigator";
 import {
   FolderIcon,
@@ -101,6 +102,9 @@ export default function Board({ status }: { status: ItemStatus }) {
   const [toast, setToast] = useState<Toast | null>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [organizingItem, setOrganizingItem] = useState<ItemMeta | null>(null);
+  const [selecting, setSelecting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkOrganizing, setBulkOrganizing] = useState(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const confirmTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [now, setNow] = useState(0);
@@ -243,12 +247,45 @@ export default function Board({ status }: { status: ItemStatus }) {
       });
       if (!response.ok) throw new Error(`save failed (${response.status})`);
       const { item } = (await response.json()) as { item: ItemMeta };
-      setItems((current) =>
-        current?.map((entry) => (entry.id === item.id ? item : entry)) ?? null,
+      setItems(
+        (current) =>
+          current?.map((entry) => (entry.id === item.id ? item : entry)) ??
+          null,
       );
       showToast({ msg: t.organizationSaved });
       return true;
     } catch {
+      showToast({ msg: t.toastFailed });
+      return false;
+    }
+  };
+
+  const saveBulkOrganization = async (values: BulkOrganizationValues) => {
+    const ids = [...selectedIds];
+    if (ids.length === 0) return false;
+    try {
+      const updated = await Promise.all(
+        ids.map(async (id) => {
+          const response = await fetch(`/api/items/${id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(values),
+          });
+          if (!response.ok) throw new Error(`save failed (${response.status})`);
+          return ((await response.json()) as { item: ItemMeta }).item;
+        }),
+      );
+      const updatedById = new Map(updated.map((item) => [item.id, item]));
+      setItems(
+        (current) =>
+          current?.map((item) => updatedById.get(item.id) ?? item) ?? null,
+      );
+      setSelectedIds(new Set());
+      setSelecting(false);
+      showToast({ msg: t.bulkMoved(ids.length) });
+      return true;
+    } catch {
+      await load();
       showToast({ msg: t.toastFailed });
       return false;
     }
@@ -272,16 +309,45 @@ export default function Board({ status }: { status: ItemStatus }) {
   ) as Record<ItemType, CategoryPreference>;
   const visibleCategories = categories.filter((category) => !category.hidden);
   const libraryIndex = buildLibraryIndex(items ?? []);
+  const toggleSelecting = () => {
+    setSelecting((current) => {
+      if (current) setSelectedIds(new Set());
+      return !current;
+    });
+  };
+  const toggleSelected = (id: string) => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+  const selectVisible = () =>
+    setSelectedIds(new Set(regular.map((item) => item.id)));
 
   const card = (item: ItemMeta) => (
     <li key={item.id} className="group">
       <div
         className={`artifact-card flex items-stretch gap-1 rounded-2xl border p-3.5 sm:p-4 ${
-          !item.read_at && status === "inbox"
-            ? "artifact-card--unread"
-            : "border-[var(--line)]"
+          selectedIds.has(item.id)
+            ? "border-[var(--accent)] bg-[var(--accent-soft)]"
+            : !item.read_at && status === "inbox"
+              ? "artifact-card--unread"
+              : "border-[var(--line)]"
         }`}
       >
+        {status === "archived" && selecting && (
+          <label className="flex shrink-0 items-center px-1">
+            <input
+              type="checkbox"
+              checked={selectedIds.has(item.id)}
+              onChange={() => toggleSelected(item.id)}
+              aria-label={t.selectItem(item.title)}
+              className="h-5 w-5 rounded border-[var(--line)] accent-[var(--accent)]"
+            />
+          </label>
+        )}
         <Link
           href={`/i/${item.id}`}
           className="flex min-w-0 flex-1 items-start gap-3.5 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
@@ -502,6 +568,9 @@ export default function Board({ status }: { status: ItemStatus }) {
           total={items.length}
           selection={librarySelection}
           onSelect={setLibrarySelection}
+          selecting={selecting}
+          selectedCount={selectedIds.size}
+          onToggleSelecting={toggleSelecting}
         />
       )}
 
@@ -599,11 +668,51 @@ export default function Board({ status }: { status: ItemStatus }) {
           </div>
         </div>
       )}
+      {status === "archived" && selecting && (
+        <div className="fixed inset-x-0 bottom-5 z-20 flex justify-center px-3">
+          <div className="flex w-full max-w-lg items-center gap-2 rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-2 shadow-[var(--shadow-md)]">
+            <span className="min-w-0 flex-1 px-2 text-sm font-semibold">
+              {t.selected(selectedIds.size)}
+            </span>
+            <button
+              type="button"
+              onClick={selectVisible}
+              className="rounded-xl px-3 py-2 text-xs text-[var(--muted)] hover:bg-[var(--surface-hover)]"
+            >
+              {t.selectVisible}
+            </button>
+            {selectedIds.size > 0 && (
+              <button
+                type="button"
+                onClick={() => setSelectedIds(new Set())}
+                className="rounded-xl px-3 py-2 text-xs text-[var(--muted)] hover:bg-[var(--surface-hover)]"
+              >
+                {t.clearSelection}
+              </button>
+            )}
+            <button
+              type="button"
+              disabled={selectedIds.size === 0}
+              onClick={() => setBulkOrganizing(true)}
+              className="rounded-xl bg-[var(--ink)] px-3.5 py-2 text-xs font-semibold text-[var(--bg)] disabled:opacity-35"
+            >
+              {t.moveSelected}
+            </button>
+          </div>
+        </div>
+      )}
       {organizingItem && (
         <OrganizerDialog
           item={organizingItem}
           onClose={() => setOrganizingItem(null)}
           onSave={saveOrganization}
+        />
+      )}
+      {bulkOrganizing && (
+        <BulkOrganizerDialog
+          count={selectedIds.size}
+          onClose={() => setBulkOrganizing(false)}
+          onSave={saveBulkOrganization}
         />
       )}
     </div>
@@ -746,7 +855,16 @@ function PinIcon() {
 
 export function ArchiveIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <rect x="3" y="4" width="18" height="4" rx="1" />
       <path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8" />
       <path d="M10 12h4" />
@@ -756,7 +874,16 @@ export function ArchiveIcon() {
 
 export function TrashIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M3 6h18" />
       <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" />
       <path d="M6 6l1 14a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-14" />
@@ -766,7 +893,16 @@ export function TrashIcon() {
 
 export function RestoreIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8" />
       <rect x="3" y="4" width="18" height="4" rx="1" />
       <path d="M12 17v-5" />
@@ -777,7 +913,16 @@ export function RestoreIcon() {
 
 export function KeepIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16l-6-3.5L6 21Z" />
     </svg>
   );

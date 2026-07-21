@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useId, useState } from "react";
 import { t } from "../lib/i18n";
 import type { ItemMeta } from "../lib/types";
+import { useOrganizationSuggestions } from "../lib/useOrganizationSuggestions";
 
 export interface OrganizationValues {
   project: string;
@@ -24,37 +25,8 @@ export function OrganizerDialog({
   const [tags, setTags] = useState(item.tags);
   const [tagInput, setTagInput] = useState("");
   const [saving, setSaving] = useState(false);
-  const [suggestions, setSuggestions] = useState({
-    projects: [] as string[],
-    folders: [] as string[],
-    tags: [] as string[],
-  });
+  const suggestions = useOrganizationSuggestions();
   const suggestionId = useId().replaceAll(":", "");
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/items?limit=500", { cache: "no-store" })
-      .then(async (response) => {
-        if (!response.ok) throw new Error(`load failed (${response.status})`);
-        return (await response.json()) as { items?: ItemMeta[] };
-      })
-      .then(({ items = [] }) => {
-        if (cancelled) return;
-        const unique = (values: Array<string | null | undefined>) =>
-          [...new Set(values.filter((value): value is string => Boolean(value)))].sort(
-            (a, b) => a.localeCompare(b),
-          );
-        setSuggestions({
-          projects: unique(items.map((entry) => entry.project)),
-          folders: unique(items.map((entry) => entry.folder)),
-          tags: unique(items.flatMap((entry) => entry.tags)),
-        });
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   const addPendingTag = () => {
     const next = tagInput.trim().replace(/^#/, "");

@@ -70,7 +70,8 @@ const STRINGS = {
     categoryLabel: "Display name",
     categoryColor: "Color",
     categoryVisible: "Show in filters",
-    categoryHiddenHint: "Hidden categories remain valid for publishing and existing items.",
+    categoryHiddenHint:
+      "Hidden categories remain valid for publishing and existing items.",
     moveUp: "Move up",
     moveDown: "Move down",
     resetDefaults: "Reset defaults",
@@ -93,6 +94,18 @@ const STRINGS = {
     organizationSaved: "Organization updated",
     library: "Library",
     libraryHint: "Filed by project and folder",
+    selectItems: "Select",
+    finishSelecting: "Done",
+    selected: (n: number) => `${n} selected`,
+    selectVisible: "Select visible",
+    clearSelection: "Clear",
+    selectItem: (title: string) => `Select ${title}`,
+    moveSelected: "Move selected",
+    bulkOrganize: "Move documents",
+    bulkOrganizeHint:
+      "Set one project and folder for every selected document. Tags stay unchanged.",
+    bulkEmptyHint: "Leave both fields empty to move the documents to Unfiled.",
+    bulkMoved: (n: number) => `Moved ${n} documents`,
     allItems: "All items",
     unfiled: "Unfiled",
     rootFolders: "Folders",
@@ -156,7 +169,8 @@ const STRINGS = {
     pinWrong: "PIN이 올바르지 않습니다",
     pinWrongRemaining: (n: number) =>
       `PIN이 올바르지 않습니다 (남은 시도 ${n}회)`,
-    pinLocked: (min: number) => `시도가 너무 많습니다. ${min}분 후 다시 시도하세요`,
+    pinLocked: (min: number) =>
+      `시도가 너무 많습니다. ${min}분 후 다시 시도하세요`,
     pinOffline: "서버에 연결할 수 없습니다",
     widthLabel: "너비",
     widthNarrow: "좁게",
@@ -189,7 +203,8 @@ const STRINGS = {
     settingsLoadFailed: "설정을 불러오지 못해 기본값을 표시합니다.",
     organize: "정리",
     organizeItem: "문서 정리",
-    organizeHint: "문서를 보관할 위치를 정하세요. /를 사용하면 폴더를 중첩할 수 있습니다.",
+    organizeHint:
+      "문서를 보관할 위치를 정하세요. /를 사용하면 폴더를 중첩할 수 있습니다.",
     project: "프로젝트",
     projectPlaceholder: "예: Dropboard",
     folder: "폴더",
@@ -201,12 +216,25 @@ const STRINGS = {
     organizationSaved: "정리 정보를 저장했습니다",
     library: "라이브러리",
     libraryHint: "프로젝트와 폴더별로 정리",
+    selectItems: "선택",
+    finishSelecting: "완료",
+    selected: (n: number) => `${n}개 선택`,
+    selectVisible: "현재 목록 전체 선택",
+    clearSelection: "선택 해제",
+    selectItem: (title: string) => `${title} 선택`,
+    moveSelected: "선택 문서 이동",
+    bulkOrganize: "문서 일괄 이동",
+    bulkOrganizeHint:
+      "선택한 문서에 같은 프로젝트와 폴더를 적용합니다. 태그는 유지됩니다.",
+    bulkEmptyHint: "두 항목을 모두 비우면 미분류로 이동합니다.",
+    bulkMoved: (n: number) => `${n}개 문서를 이동했습니다`,
     allItems: "전체 문서",
     unfiled: "미분류",
     rootFolders: "폴더",
     versions: "버전",
     versionHistory: "버전 기록",
-    versionHistoryHint: "업데이트할 때마다 변경 불가능한 리비전으로 보존됩니다.",
+    versionHistoryHint:
+      "업데이트할 때마다 변경 불가능한 리비전으로 보존됩니다.",
     currentVersion: "현재 버전",
     viewingVersion: (shown: number, current: number) =>
       `v${current} 중 v${shown}을 보는 중`,
@@ -222,10 +250,7 @@ const STRINGS = {
 
 export const t = STRINGS[LOCALE];
 
-export const TYPE_LABELS: Record<
-  string,
-  { label: string; seal: string }
-> = {
+export const TYPE_LABELS: Record<string, { label: string; seal: string }> = {
   review:
     LOCALE === "ko"
       ? { label: "검토", seal: "검" }

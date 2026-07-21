@@ -11,11 +11,17 @@ export function LibraryNavigator({
   total,
   selection,
   onSelect,
+  selecting,
+  selectedCount,
+  onToggleSelecting,
 }: {
   index: LibraryIndex;
   total: number;
   selection: string;
   onSelect: (selection: string) => void;
+  selecting: boolean;
+  selectedCount: number;
+  onToggleSelecting: () => void;
 }) {
   return (
     <section className="mx-3 mt-3 overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface)] shadow-[var(--shadow-sm)] sm:mx-5 sm:mt-4">
@@ -26,9 +32,22 @@ export function LibraryNavigator({
             {t.libraryHint}
           </p>
         </div>
-        <span className="rounded-full bg-[var(--surface-2)] px-2.5 py-1 font-mono text-[10px] text-[var(--muted)]">
-          {total}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="rounded-full bg-[var(--surface-2)] px-2.5 py-1 font-mono text-[10px] text-[var(--muted)]">
+            {selecting ? t.selected(selectedCount) : total}
+          </span>
+          <button
+            type="button"
+            onClick={onToggleSelecting}
+            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+              selecting
+                ? "bg-[var(--ink)] text-[var(--bg)]"
+                : "border border-[var(--line)] text-[var(--muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--ink)]"
+            }`}
+          >
+            {selecting ? t.finishSelecting : t.selectItems}
+          </button>
+        </div>
       </div>
       <nav className="scrollbar-none flex items-start gap-2 overflow-x-auto p-3 sm:p-4">
         <div className="flex w-40 shrink-0 flex-col gap-1">
