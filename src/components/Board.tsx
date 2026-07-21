@@ -260,17 +260,15 @@ export default function Board({ status }: { status: ItemStatus }) {
     const ids = [...selectedIds];
     if (ids.length === 0) return false;
     try {
-      const updated = await Promise.all(
-        ids.map(async (id) => {
-          const response = await fetch(`/api/items/${id}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(values),
-          });
-          if (!response.ok) throw new Error(`save failed (${response.status})`);
-          return ((await response.json()) as { item: ItemMeta }).item;
-        }),
-      );
+      const response = await fetch("/api/items/bulk-organize", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ item_ids: ids, ...values }),
+      });
+      if (!response.ok) throw new Error(`save failed (${response.status})`);
+      const { items: updated } = (await response.json()) as {
+        items: ItemMeta[];
+      };
       const updatedById = new Map(updated.map((item) => [item.id, item]));
       setItems(
         (current) =>
