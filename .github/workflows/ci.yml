@@ -22,7 +22,7 @@ jobs:
       DROPBOARD_SESSION_SECRET: ci-session-secret-that-is-at-least-32-characters
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: npm
@@ -41,7 +41,7 @@ jobs:
       DROPBOARD_SESSION_SECRET: e2e-session-secret-that-is-at-least-32-characters
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
