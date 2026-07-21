@@ -23,9 +23,14 @@ Before opening a pull request, run:
 ```bash
 npm run lint
 npm test
+npx playwright install chromium # first run only
+npm run test:e2e
 npm run build
 npm run audit
 ```
+
+The browser suite builds and starts an isolated production server on port 3015.
+Its fixtures live under `.e2e-data` and never use your normal board data.
 
 The audit command blocks high and critical findings. Moderate advisories must
 still be reviewed and should be mentioned in the pull request when relevant.
@@ -53,4 +58,3 @@ The repository is currently distributed as source and as a Docker deployment.
 Publishing the root package to npm is not a supported release path.
 
 By participating, you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
-

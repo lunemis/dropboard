@@ -32,3 +32,19 @@ jobs:
       - run: npm run build
       - run: npm run audit
 
+  e2e:
+    name: Browser E2E
+    runs-on: ubuntu-latest
+    env:
+      DROPBOARD_TOKEN: e2e-token-that-is-at-least-24-characters
+      DROPBOARD_PIN: "123456"
+      DROPBOARD_SESSION_SECRET: e2e-session-secret-that-is-at-least-32-characters
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
