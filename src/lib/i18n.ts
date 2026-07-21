@@ -91,6 +91,11 @@ const STRINGS = {
     removeTag: (tag: string) => `Remove ${tag}`,
     cancel: "Cancel",
     organizationSaved: "Organization updated",
+    library: "Library",
+    libraryHint: "Filed by project and folder",
+    allItems: "All items",
+    unfiled: "Unfiled",
+    rootFolders: "Folders",
   },
   ko: {
     brandTagline: "AI 산출물을 차분하게 검토하는 공간",
@@ -181,6 +186,11 @@ const STRINGS = {
     removeTag: (tag: string) => `${tag} 태그 삭제`,
     cancel: "취소",
     organizationSaved: "정리 정보를 저장했습니다",
+    library: "라이브러리",
+    libraryHint: "프로젝트와 폴더별로 정리",
+    allItems: "전체 문서",
+    unfiled: "미분류",
+    rootFolders: "폴더",
   },
 } as const;
 
