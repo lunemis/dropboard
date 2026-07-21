@@ -31,6 +31,7 @@ press Keep to retain one. When unsure, publish as keep — deleting is easy.
 2. **Publish**:
    ```bash
    dropboard publish <file> --type <type> --project <project-slug> \
+     [--folder <parent/child>] \
      --summary "<one-line summary>" --tags a,b --source <agent-name> \
      [--temp]   # temp mode only; custom duration: --temp 30m / --temp 1d
    ```
@@ -50,6 +51,9 @@ press Keep to retain one. When unsure, publish as keep — deleting is easy.
   - `fun` — entertainment, toys
 - `--summary`: shown as two lines on the list card. What it is + what the user should do.
 - `--project`: related project slug; omit for general topics.
+- `--folder`: optional path inside the project. Use it only when the destination is
+  already clear from context; otherwise leave the item for the user's Unfiled queue.
+- `--tags`: useful search terms. The user can edit project, folder, and tags later.
 
 ## HTML artifact quality rules
 

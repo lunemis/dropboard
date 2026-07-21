@@ -95,7 +95,8 @@ available for container and reverse-proxy health checks.
 
 ```bash
 dropboard publish <file> [--title T] [--type review|decision|report|info|fun]
-                      [--project P] [--summary S] [--tags a,b] [--server URL]
+                      [--project P] [--folder A/B] [--summary S]
+                      [--tags a,b] [--server URL]
 dropboard list [--status inbox|archived|trash]
 ```
 
@@ -114,6 +115,19 @@ curl -X POST $URL/api/items \
 `GET /api/items` accepts `status`, `type`, `project`, `q`, `limit` (1–500),
 and `offset`. Responses include `items`, `total`, `limit`, `offset`, and
 `has_more`.
+
+### Organizing the library
+
+Archiving removes an item from the review queue and places it in the library.
+Items without a project or folder appear in **Unfiled**, ready for you to sort
+later. Open an item and use the folder-plus button to edit its project, nested
+folder path, and tags. The library builds its project/folder navigator from this
+metadata; selecting a parent folder includes every descendant.
+
+Organization is logical metadata rather than physical file movement. Item IDs,
+bookmarks, and share links therefore remain stable when folders are renamed.
+Agents can supply an initial folder with `--folder Research/Agents`, but should
+leave it unset when the destination is uncertain.
 
 ### Category customization
 

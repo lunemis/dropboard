@@ -14,9 +14,12 @@ deliverable to my dropboard:
    - Markdown for plain notes/checklists/summaries
 2. Publish it:
    dropboard publish <file> --type <review|decision|report|info|fun> \
-     --summary "<what it is + what I should do>" [--project <slug>] [--tags a,b] [--temp]
+     --summary "<what it is + what I should do>" [--project <slug>] \
+     [--folder <parent/child>] [--tags a,b] [--temp]
    Use --temp (auto-deletes in 2h) when I just asked to *see* something as HTML;
    omit it for documents worth keeping.
+   Only set --folder when the destination is already clear; otherwise leave it
+   unfiled so I can organize it later. I can edit project, folder, and tags in the UI.
    (Without the CLI: POST {URL}/api/items with header "Authorization: Bearer <token>"
    and JSON body {title, type, summary, content, content_type: "html"|"markdown"}.
    Read url/token from ~/.config/dropboard/config.json.)

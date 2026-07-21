@@ -4,7 +4,8 @@
  *
  * Usage:
  *   dropboard publish <file> [--title T] [--type review|decision|report|info|fun]
- *                         [--project P] [--summary S] [--tags a,b] [--source S]
+ *                         [--project P] [--folder A/B] [--summary S]
+ *                         [--tags a,b] [--source S]
  *                         [--server URL]
  *   dropboard list [--status inbox|archived|trash]
  *
@@ -102,6 +103,7 @@ async function publish(argv) {
     source: flags.source || "dropboard-cli",
   };
   if (flags.project) body.project = flags.project;
+  if (flags.folder) body.folder = flags.folder;
   if (flags.summary) body.summary = flags.summary;
   if (flags.tags) body.tags = flags.tags.split(",").map((t) => t.trim()).filter(Boolean);
   if ("temp" in flags) {
@@ -173,7 +175,8 @@ else {
 commands:
   dropboard publish <file> [--title T] [--type ${TYPES.join("|")}]
                         [--temp [30m|2h|1d]]   # ephemeral: auto-deletes (default 2h)
-                        [--project P] [--summary S] [--tags a,b] [--server URL]
+                        [--project P] [--folder A/B] [--summary S]
+                        [--tags a,b] [--server URL]
   dropboard list [--status inbox|archived|trash]
 
 .md/.markdown files are published as markdown, everything else as html.

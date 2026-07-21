@@ -23,6 +23,7 @@ test("prints help successfully without a command", () => {
   const result = spawnSync(process.execPath, [cli], { encoding: "utf8" });
   assert.equal(result.status, 0);
   assert.match(result.stdout, /dropboard publish/);
+  assert.match(result.stdout, /--folder A\/B/);
 });
 
 test("rejects an invalid artifact type before publishing", () => {

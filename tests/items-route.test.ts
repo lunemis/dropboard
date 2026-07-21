@@ -47,11 +47,14 @@ test("publish API requires the bearer token", async () => {
 });
 
 test("publish API creates a validated item", async () => {
-  const response = await POST(publishRequest(true));
+  const response = await POST(
+    publishRequest(true, { folder: "Research / Agents" }),
+  );
   assert.equal(response.status, 201);
   const body = await response.json();
   assert.equal(body.item.title, "API item");
   assert.match(body.url, /^\/i\//);
+  assert.equal(body.item.folder, "Research/Agents");
 });
 
 test("publish API rejects oversized metadata", async () => {

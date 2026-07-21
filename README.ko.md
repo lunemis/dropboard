@@ -101,7 +101,8 @@ docker compose up --build -d
 
 ```bash
 dropboard publish <파일> [--title 제목] [--type review|decision|report|info|fun]
-                      [--project 프로젝트] [--summary 요약] [--tags a,b] [--server URL]
+                      [--project 프로젝트] [--folder 상위/하위] [--summary 요약]
+                      [--tags a,b] [--server URL]
 dropboard list [--status inbox|archived|trash]
 ```
 
@@ -120,6 +121,19 @@ curl -X POST $URL/api/items \
 `GET /api/items`는 `status`, `type`, `project`, `q`, `limit`(1–500),
 `offset`을 받습니다. 응답에는 `items`, `total`, `limit`, `offset`,
 `has_more`가 포함됩니다.
+
+### 라이브러리 정리
+
+문서를 보관하면 검토 대기열에서 빠지고 라이브러리로 이동합니다. 프로젝트와
+폴더가 없는 문서는 **미분류**에 모이므로 나중에 천천히 정리할 수 있습니다.
+문서를 열고 폴더+ 버튼을 누르면 프로젝트, 중첩 폴더 경로, 태그를 수정할 수
+있습니다. 라이브러리는 이 정보로 프로젝트/폴더 탐색기를 만들며, 상위 폴더를
+선택하면 모든 하위 폴더 문서도 함께 표시합니다.
+
+정리 구조는 실제 파일 이동이 아닌 논리적 메타데이터입니다. 따라서 폴더를
+바꾸어도 문서 ID, 북마크, 공유 링크가 유지됩니다. 에이전트는 목적지가 확실할
+때 `--folder 리서치/경쟁제품`으로 초기 위치를 지정하고, 불확실하면 비워 두어
+사용자가 미분류에서 직접 정리할 수 있습니다.
 
 ### 카테고리 편집
 
