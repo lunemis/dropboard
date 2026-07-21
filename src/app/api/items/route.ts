@@ -12,6 +12,8 @@ import {
 const MAX_CONTENT_BYTES = 5 * 1024 * 1024;
 const MAX_REQUEST_BYTES = 8 * 1024 * 1024;
 const MAX_PROJECT_LENGTH = 100;
+const MAX_FOLDER_LENGTH = 240;
+const MAX_FOLDER_SEGMENT_LENGTH = 80;
 const MAX_TAGS = 20;
 const MAX_TAG_LENGTH = 50;
 const MAX_SOURCE_LENGTH = 100;
@@ -142,10 +144,35 @@ export async function POST(req: NextRequest) {
       { status: 400 },
     );
   }
+  if (body.folder !== undefined && typeof body.folder !== "string") {
+    return NextResponse.json(
+      { error: "folder must be a string" },
+      { status: 400 },
+    );
+  }
   const project = typeof body.project === "string" ? body.project.trim() : "";
   if (project.length > MAX_PROJECT_LENGTH) {
     return NextResponse.json(
       { error: `project must be at most ${MAX_PROJECT_LENGTH} chars` },
+      { status: 400 },
+    );
+  }
+  const folderParts =
+    typeof body.folder === "string"
+      ? body.folder.split("/").map((part) => part.trim()).filter(Boolean)
+      : [];
+  const folder = folderParts.join("/");
+  if (
+    folder.length > MAX_FOLDER_LENGTH ||
+    folderParts.some(
+      (part) =>
+        part === "." ||
+        part === ".." ||
+        part.length > MAX_FOLDER_SEGMENT_LENGTH,
+    )
+  ) {
+    return NextResponse.json(
+      { error: "folder contains an invalid path" },
       { status: 400 },
     );
   }
@@ -189,6 +216,7 @@ export async function POST(req: NextRequest) {
     content,
     content_type: contentType,
     project: project || undefined,
+    folder: folder || undefined,
     tags: tags
       .map((tag) => (tag as string).trim())
       .filter((tag, index, all) => tag && all.indexOf(tag) === index),

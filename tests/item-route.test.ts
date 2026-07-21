@@ -46,12 +46,36 @@ test("rejects invalid and conflicting patch fields", async () => {
 
 test("applies a valid patch", async () => {
   const response = await PATCH(
-    patchRequest({ pinned: true, read: true }),
+    patchRequest({
+      pinned: true,
+      read: true,
+      project: "Dropboard",
+      folder: "Research / Agents",
+      tags: ["open-source", " agents ", "agents"],
+    }),
     { params: Promise.resolve({ id: itemId }) },
   );
   assert.equal(response.status, 200);
   const body = await response.json();
   assert.equal(body.item.pinned, true);
   assert.ok(body.item.read_at);
+  assert.equal(body.item.project, "Dropboard");
+  assert.equal(body.item.folder, "Research/Agents");
+  assert.deepEqual(body.item.tags, ["open-source", "agents"]);
 });
 
+test("rejects invalid organization metadata", async () => {
+  const ctx = { params: Promise.resolve({ id: itemId }) };
+  assert.equal(
+    (await PATCH(patchRequest({ folder: "Research/../Secret" }), ctx)).status,
+    400,
+  );
+  assert.equal(
+    (await PATCH(patchRequest({ tags: Array(21).fill("tag") }), ctx)).status,
+    400,
+  );
+  assert.equal(
+    (await PATCH(patchRequest({ project: "p".repeat(101) }), ctx)).status,
+    400,
+  );
+});

@@ -11,6 +11,7 @@ export interface ItemMeta {
   title: string;
   type: ItemType;
   project: string | null;
+  folder: string | null;
   tags: string[];
   summary: string;
   content_file: string;
@@ -32,6 +33,7 @@ export interface CreateItemInput {
   title: string;
   type: ItemType;
   project?: string;
+  folder?: string;
   tags?: string[];
   summary?: string;
   content: string;

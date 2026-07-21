@@ -27,7 +27,7 @@ function now(): string {
   return new Date().toISOString();
 }
 
-function isItemMeta(value: unknown, expectedId: string): value is ItemMeta {
+function isItemMeta(value: unknown, expectedId: string): boolean {
   if (!value || typeof value !== "object") return false;
   const meta = value as Record<string, unknown>;
   const contentType = meta.content_type;
@@ -42,6 +42,9 @@ function isItemMeta(value: unknown, expectedId: string): value is ItemMeta {
     typeof meta.title === "string" &&
     ITEM_TYPES.includes(meta.type as ItemType) &&
     (meta.project === null || typeof meta.project === "string") &&
+    (meta.folder === undefined ||
+      meta.folder === null ||
+      typeof meta.folder === "string") &&
     Array.isArray(meta.tags) &&
     meta.tags.every((tag) => typeof tag === "string") &&
     typeof meta.summary === "string" &&
@@ -84,7 +87,10 @@ async function readMeta(id: string): Promise<ItemMeta | null> {
       console.warn(`[dropboard] ignoring invalid metadata for item ${id}`);
       return null;
     }
-    return parsed;
+    const legacyMeta = parsed as Omit<ItemMeta, "folder"> & {
+      folder?: string | null;
+    };
+    return { ...legacyMeta, folder: legacyMeta.folder ?? null };
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
       console.warn(
@@ -201,6 +207,7 @@ export async function createItem(input: CreateItemInput): Promise<ItemMeta> {
     title: input.title,
     type: input.type,
     project: input.project ?? null,
+    folder: input.folder ?? null,
     tags: input.tags ?? [],
     summary: input.summary ?? "",
     content_file: contentFile,
@@ -238,6 +245,9 @@ export interface UpdatePatch {
   status?: ItemStatus;
   pinned?: boolean;
   read?: boolean;
+  project?: string | null;
+  folder?: string | null;
+  tags?: string[];
   /** true → promote a temp item to keep (clears expires_at) */
   keep?: boolean;
   /** set → (re)mark as temp, expiring this many minutes from now */
@@ -258,6 +268,9 @@ export async function updateItem(
       meta.trashed_at = patch.status === "trash" ? now() : null;
     }
     if (typeof patch.pinned === "boolean") meta.pinned = patch.pinned;
+    if (patch.project !== undefined) meta.project = patch.project;
+    if (patch.folder !== undefined) meta.folder = patch.folder;
+    if (patch.tags !== undefined) meta.tags = [...patch.tags];
     if (patch.read === true && !meta.read_at) meta.read_at = now();
     if (patch.read === false) meta.read_at = null;
     if (patch.keep === true) meta.expires_at = null;

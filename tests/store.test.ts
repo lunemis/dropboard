@@ -33,10 +33,16 @@ test("creates, reads, lists, and updates an item", async () => {
     pinned: true,
     read: true,
     status: "archived",
+    project: "Dropboard",
+    folder: "Research/Agents",
+    tags: ["reference", "ai"],
   });
   assert.equal(updated?.pinned, true);
   assert.equal(updated?.status, "archived");
   assert.ok(updated?.read_at);
+  assert.equal(updated?.project, "Dropboard");
+  assert.equal(updated?.folder, "Research/Agents");
+  assert.deepEqual(updated?.tags, ["reference", "ai"]);
 
   const revoked = await store.revokeShares(item.id);
   assert.equal(revoked?.share_epoch, 1);
