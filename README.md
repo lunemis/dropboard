@@ -115,6 +115,19 @@ curl -X POST $URL/api/items \
 and `offset`. Responses include `items`, `total`, `limit`, `offset`, and
 `has_more`.
 
+### Category customization
+
+Open **Categories** from the gear button on the board to change each category's
+display name, color, filter order, or filter visibility. The machine IDs
+`review`, `decision`, `report`, `info`, and `fun` intentionally stay fixed, so
+existing agent skills, CLI commands, and API integrations do not need to sync
+with presentation changes. Hiding a category only removes its filter chip;
+existing items and new publications using that ID continue to work.
+
+The preferences are stored alongside the item data in
+`_settings/categories.json`, so they follow the same backup or Docker volume as
+the rest of the board.
+
 ## Agent integration
 
 The point of dropboard is that you say "put it on the board" and it happens. See [`integrations/`](integrations/):
