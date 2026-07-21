@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { relTime, t } from "../lib/i18n";
 import type { ItemMeta, RevisionMeta } from "../lib/types";
+import { useDialogFocus } from "../lib/useDialogFocus";
 
 export interface RevisionWithUrl extends RevisionMeta {
   raw_url: string;
@@ -25,6 +26,12 @@ export function VersionHistory({
   const [loadFailed, setLoadFailed] = useState(false);
   const [restoring, setRestoring] = useState<number | null>(null);
   const [confirming, setConfirming] = useState<number | null>(null);
+  const dialogRef = useRef<HTMLElement>(null);
+  useDialogFocus({
+    containerRef: dialogRef,
+    onClose,
+    disabled: restoring !== null,
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -71,10 +78,15 @@ export function VersionHistory({
       aria-modal="true"
       aria-labelledby="version-history-title"
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget && restoring === null) onClose();
+        if (event.target === event.currentTarget && restoring === null)
+          onClose();
       }}
     >
-      <aside className="flex h-full w-full max-w-md flex-col border-l border-[var(--line)] bg-[var(--surface)] shadow-[var(--shadow-md)]">
+      <aside
+        ref={dialogRef}
+        tabIndex={-1}
+        className="flex h-full w-full max-w-md flex-col border-l border-[var(--line)] bg-[var(--surface)] shadow-[var(--shadow-md)] outline-none"
+      >
         <div className="flex items-start justify-between gap-4 border-b border-[var(--line)] p-5 sm:p-6">
           <div>
             <p className="font-mono text-[10px] font-semibold tracking-[0.12em] text-[var(--violet)] uppercase">
@@ -91,6 +103,7 @@ export function VersionHistory({
             </p>
           </div>
           <button
+            data-dialog-autofocus
             type="button"
             aria-label={t.cancel}
             onClick={onClose}
@@ -135,7 +148,9 @@ export function VersionHistory({
                           v{revision.revision}
                         </strong>
                         <span className="text-[10px] text-[var(--muted)]">
-                          {current ? t.currentVersion : relTime(revision.created_at)}
+                          {current
+                            ? t.currentVersion
+                            : relTime(revision.created_at)}
                         </span>
                       </span>
                       <span className="mt-1.5 block text-sm font-medium">

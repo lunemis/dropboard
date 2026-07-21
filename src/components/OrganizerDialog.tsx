@@ -1,6 +1,7 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
+import { useDialogFocus } from "../lib/useDialogFocus";
 import { t } from "../lib/i18n";
 import type { ItemMeta } from "../lib/types";
 import { useOrganizationSuggestions } from "../lib/useOrganizationSuggestions";
@@ -27,6 +28,8 @@ export function OrganizerDialog({
   const [saving, setSaving] = useState(false);
   const suggestions = useOrganizationSuggestions();
   const suggestionId = useId().replaceAll(":", "");
+  const dialogRef = useRef<HTMLElement>(null);
+  useDialogFocus({ containerRef: dialogRef, onClose, disabled: saving });
 
   const addPendingTag = () => {
     const next = tagInput.trim().replace(/^#/, "");
@@ -58,7 +61,11 @@ export function OrganizerDialog({
         if (event.target === event.currentTarget && !saving) onClose();
       }}
     >
-      <section className="w-full max-w-lg rounded-t-3xl border border-[var(--line)] bg-[var(--surface)] p-5 shadow-[var(--shadow-md)] sm:rounded-3xl sm:p-6">
+      <section
+        ref={dialogRef}
+        tabIndex={-1}
+        className="w-full max-w-lg rounded-t-3xl border border-[var(--line)] bg-[var(--surface)] p-5 shadow-[var(--shadow-md)] outline-none sm:rounded-3xl sm:p-6"
+      >
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="font-mono text-[10px] font-semibold tracking-[0.12em] text-[var(--accent)] uppercase">
@@ -87,6 +94,7 @@ export function OrganizerDialog({
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
           <OrganizerField label={t.project}>
             <input
+              data-dialog-autofocus
               value={project}
               maxLength={100}
               placeholder={t.projectPlaceholder}
