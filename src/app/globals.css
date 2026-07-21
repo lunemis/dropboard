@@ -16,6 +16,8 @@
   --accent: #e85d40;
   --accent-soft: #fce9e3;
   --accent-ring: rgb(232 93 64 / 0.15);
+  --violet: #6558d8;
+  --violet-soft: #eceaff;
   --shadow-sm: 0 1px 2px rgb(32 40 51 / 0.04),
     0 6px 20px rgb(32 40 51 / 0.035);
   --shadow-md: 0 1px 2px rgb(32 40 51 / 0.05),
@@ -53,6 +55,8 @@
     --accent: #f0785d;
     --accent-soft: #3c2420;
     --accent-ring: rgb(240 120 93 / 0.17);
+    --violet: #aaa3ff;
+    --violet-soft: #2b294a;
     --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.2), 0 8px 24px rgb(0 0 0 / 0.16);
     --shadow-md: 0 1px 2px rgb(0 0 0 / 0.25),
       0 18px 48px rgb(0 0 0 / 0.24);

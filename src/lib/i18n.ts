@@ -96,6 +96,19 @@ const STRINGS = {
     allItems: "All items",
     unfiled: "Unfiled",
     rootFolders: "Folders",
+    versions: "Versions",
+    versionHistory: "Version history",
+    versionHistoryHint: "Every update is kept as an immutable revision.",
+    currentVersion: "Current",
+    viewingVersion: (shown: number, current: number) =>
+      `Viewing v${shown} of v${current}`,
+    backToLatest: "Back to latest",
+    revisionNoteFallback: "No change note",
+    restoreVersion: "Restore this version",
+    confirmRestore: "Restore?",
+    versionRestored: (version: number) =>
+      `Restored v${version} as a new revision`,
+    versionLoadFailed: "Couldn't load version history",
   },
   ko: {
     brandTagline: "AI 산출물을 차분하게 검토하는 공간",
@@ -191,6 +204,19 @@ const STRINGS = {
     allItems: "전체 문서",
     unfiled: "미분류",
     rootFolders: "폴더",
+    versions: "버전",
+    versionHistory: "버전 기록",
+    versionHistoryHint: "업데이트할 때마다 변경 불가능한 리비전으로 보존됩니다.",
+    currentVersion: "현재 버전",
+    viewingVersion: (shown: number, current: number) =>
+      `v${current} 중 v${shown}을 보는 중`,
+    backToLatest: "최신 버전으로",
+    revisionNoteFallback: "변경 설명 없음",
+    restoreVersion: "이 버전 복원",
+    confirmRestore: "복원할까요?",
+    versionRestored: (version: number) =>
+      `v${version}을 새 버전으로 복원했습니다`,
+    versionLoadFailed: "버전 기록을 불러오지 못했습니다",
   },
 } as const;
 

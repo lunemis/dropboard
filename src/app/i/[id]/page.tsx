@@ -15,6 +15,11 @@ import {
   OrganizerDialog,
   type OrganizationValues,
 } from "../../../components/OrganizerDialog";
+import {
+  HistoryIcon,
+  VersionHistory,
+  type RevisionWithUrl,
+} from "../../../components/VersionHistory";
 import { remainTime, t } from "../../../lib/i18n";
 import type { ItemMeta, ItemStatus } from "../../../lib/types";
 import { useStoredChoice } from "../../../lib/useStoredChoice";
@@ -50,6 +55,9 @@ export default function ViewerPage() {
   const [shareToast, setShareToast] = useState<ShareToast | null>(null);
   const [sharing, setSharing] = useState(false);
   const [organizing, setOrganizing] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [selectedRevision, setSelectedRevision] = useState<number | null>(null);
+  const [previewRawUrl, setPreviewRawUrl] = useState<string | null>(null);
   const shareToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const showShareToast = (toastValue: ShareToast | null) => {
@@ -136,6 +144,25 @@ export default function ViewerPage() {
       showShareToast({ msg: t.toastFailed });
       return false;
     }
+  };
+
+  const selectRevision = (revision: RevisionWithUrl | null) => {
+    setSelectedRevision(revision?.revision ?? null);
+    setPreviewRawUrl(revision?.raw_url ?? null);
+  };
+
+  const revisionRestored = (item: ItemMeta, restoredFrom: number) => {
+    setMeta(item);
+    setSelectedRevision(null);
+    setPreviewRawUrl(null);
+    setHistoryOpen(false);
+    setRawUrl((current) =>
+      current
+        ? `${current}${current.includes("?") ? "&" : "?"}reload=${Date.now()}`
+        : current,
+    );
+    patch({ read: true }).catch(() => {});
+    showShareToast({ msg: t.versionRestored(restoredFrom) });
   };
 
   const moveTo = async (status: ItemStatus) => {
@@ -271,6 +298,17 @@ export default function ViewerPage() {
         )}
         {meta && (
           <button
+            aria-label={t.versions}
+            title={t.versions}
+            onClick={() => setHistoryOpen(true)}
+            className="flex h-11 shrink-0 items-center gap-1 rounded-full px-2 text-[var(--muted)] active:bg-[var(--surface-2)]"
+          >
+            <HistoryIcon />
+            <span className="font-mono text-[10px]">v{meta.revision}</span>
+          </button>
+        )}
+        {meta && (
+          <button
             aria-label={t.organize}
             title={t.organize}
             onClick={openOrganizer}
@@ -366,13 +404,27 @@ export default function ViewerPage() {
           </div>
         )}
       </header>
+      {meta && selectedRevision !== null && (
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--line)] bg-[var(--violet-soft)] px-4 py-2 text-xs text-[var(--violet)]">
+          <span className="font-semibold">
+            {t.viewingVersion(selectedRevision, meta.revision)}
+          </span>
+          <button
+            type="button"
+            onClick={() => selectRevision(null)}
+            className="font-semibold underline underline-offset-2"
+          >
+            {t.backToLatest}
+          </button>
+        </div>
+      )}
       {meta && rawUrl ? (
         <iframe
           sandbox="allow-scripts"
           src={
             meta.content_type === "markdown"
-              ? `${rawUrl}${rawUrl.includes("?") ? "&" : "?"}w=${viewerWidth}`
-              : rawUrl
+              ? `${previewRawUrl ?? rawUrl}${(previewRawUrl ?? rawUrl).includes("?") ? "&" : "?"}w=${viewerWidth}`
+              : previewRawUrl ?? rawUrl
           }
           title={meta.title}
           className="w-full flex-1 border-0 bg-white"
@@ -404,6 +456,15 @@ export default function ViewerPage() {
           item={meta}
           onClose={() => setOrganizing(false)}
           onSave={saveOrganization}
+        />
+      )}
+      {historyOpen && meta && (
+        <VersionHistory
+          item={meta}
+          selectedRevision={selectedRevision}
+          onSelect={selectRevision}
+          onRestored={revisionRestored}
+          onClose={() => setHistoryOpen(false)}
         />
       )}
     </div>

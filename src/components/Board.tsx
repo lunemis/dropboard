@@ -309,6 +309,11 @@ export default function Board({ status }: { status: ItemStatus }) {
                   {item.folder.replaceAll("/", " › ")}
                 </span>
               )}
+              {item.revision > 1 && (
+                <span className="metadata-chip border-[color-mix(in_srgb,var(--violet)_24%,transparent)] bg-[var(--violet-soft)] font-semibold text-[var(--violet)]">
+                  v{item.revision}
+                </span>
+              )}
               {item.tags.slice(0, 3).map((tag) => (
                 <span key={tag} className="text-[var(--muted-soft)]">
                   #{tag}
