@@ -13,11 +13,13 @@ Agent: dropboard publish out.html
 You:   read on phone → archive
 ```
 
-![Inbox on desktop — stamp-seal type badges, unread dots, and a Temporary group with countdowns](docs/screenshots/desktop-inbox.png)
+![Inbox on desktop — type seals, prominent unread labels, revision metadata, and a Temporary group with countdowns](docs/screenshots/desktop-inbox.png)
+
+![Archive library on desktop — documents filed by project and nested folder](docs/screenshots/desktop-library.png)
 
 <p align="center">
   <img src="docs/screenshots/shot-inbox.png" width="230" alt="Inbox on mobile" />
-  <img src="docs/screenshots/shot-viewer.png" width="230" alt="Reviewing a deliverable — full-fidelity rendering in a sandboxed viewer" />
+  <img src="docs/screenshots/shot-viewer.png" width="230" alt="Reviewing a versioned deliverable — full-fidelity rendering in a sandboxed viewer" />
   <img src="docs/screenshots/shot-login.png" width="230" alt="PIN login" />
 </p>
 

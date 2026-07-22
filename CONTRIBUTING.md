@@ -32,6 +32,10 @@ npm run audit
 The browser suite builds and starts an isolated production server on port 3015.
 Its fixtures live under `.e2e-data` and never use your normal board data.
 
+When a visible UI change makes the README images stale, regenerate the isolated
+demo fixtures and all screenshots with `npm run docs:screenshots`. Review every
+generated image before committing it.
+
 The audit command blocks high and critical findings. Moderate advisories must
 still be reviewed and should be mentioned in the pull request when relevant.
 

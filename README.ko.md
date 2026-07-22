@@ -13,11 +13,13 @@ AI:  dropboard publish out.html
 나:  폰에서 읽고 → 보관. 끝.
 ```
 
-![데스크톱 받은함 — 도장 뱃지, 미읽음 표시, 카운트다운이 있는 임시 그룹](docs/screenshots/desktop-inbox.png)
+![데스크톱 받은함 — 유형 도장, 눈에 띄는 미읽음 표시, 버전 정보, 카운트다운이 있는 임시 그룹](docs/screenshots/desktop-inbox.png)
+
+![데스크톱 보관함 — 프로젝트와 중첩 폴더별로 정리된 문서](docs/screenshots/desktop-library.png)
 
 <p align="center">
   <img src="docs/screenshots/shot-inbox.png" width="230" alt="모바일 받은함" />
-  <img src="docs/screenshots/shot-viewer.png" width="230" alt="산출물 리뷰 — 격리된 뷰어에서 원본 그대로 렌더링" />
+  <img src="docs/screenshots/shot-viewer.png" width="230" alt="버전이 관리되는 산출물 리뷰 — 격리된 뷰어에서 원본 그대로 렌더링" />
   <img src="docs/screenshots/shot-login.png" width="230" alt="PIN 로그인" />
 </p>
 
