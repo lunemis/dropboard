@@ -11,6 +11,7 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "docs:screenshots": "node scripts/capture-screenshots.mjs",
+    "release:check": "node scripts/validate-release.mjs",
     "audit": "npm audit --omit=dev --audit-level=high",
     "cleanup": "node scripts/cleanup.mjs"
   },

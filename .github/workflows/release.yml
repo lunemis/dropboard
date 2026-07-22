@@ -1,0 +1,55 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify release
+    runs-on: ubuntu-latest
+    env:
+      DROPBOARD_TOKEN: release-token-that-is-at-least-24-characters
+      DROPBOARD_PIN: "123456"
+      DROPBOARD_SESSION_SECRET: release-session-secret-that-is-at-least-32-characters
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run release:check -- "$GITHUB_REF_NAME"
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      - run: npm run audit
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+
+  publish:
+    name: Publish GitHub Release
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - name: Publish curated release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          notes="docs/releases/${GITHUB_REF_NAME}.md"
+          test -f "$notes"
+          gh release create "$GITHUB_REF_NAME" \
+            --verify-tag \
+            --title "dropboard ${GITHUB_REF_NAME}" \
+            --notes-file "$notes"
