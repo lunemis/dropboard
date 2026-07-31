@@ -48,13 +48,17 @@ test("publish API requires the bearer token", async () => {
 
 test("publish API creates a validated item", async () => {
   const response = await POST(
-    publishRequest(true, { folder: "Research / Agents" }),
+    publishRequest(true, {
+      folder: "Research / Agents",
+      view_mode: "presentation",
+    }),
   );
   assert.equal(response.status, 201);
   const body = await response.json();
   assert.equal(body.item.title, "API item");
   assert.match(body.url, /^\/i\//);
   assert.equal(body.item.folder, "Research/Agents");
+  assert.equal(body.item.view_mode, "presentation");
 });
 
 test("publish API rejects oversized metadata", async () => {
@@ -63,6 +67,14 @@ test("publish API rejects oversized metadata", async () => {
   );
   assert.equal(response.status, 400);
   assert.match((await response.json()).error, /project/);
+});
+
+test("publish API rejects an invalid view mode", async () => {
+  const response = await POST(
+    publishRequest(true, { view_mode: "spreadsheet" }),
+  );
+  assert.equal(response.status, 400);
+  assert.match((await response.json()).error, /view_mode/);
 });
 
 test("list API returns bounded pagination metadata", async () => {
@@ -84,6 +96,7 @@ test("a stable document key updates instead of duplicating an item", async () =>
       title: "Living document",
       document_key: "dropboard/living-document",
       tags: ["living"],
+      view_mode: "presentation",
     }),
   );
   assert.equal(first.status, 201);
@@ -101,6 +114,7 @@ test("a stable document key updates instead of duplicating an item", async () =>
   assert.equal(secondBody.item.id, firstBody.item.id);
   assert.equal(secondBody.item.revision, 2);
   assert.deepEqual(secondBody.item.tags, ["living"]);
+  assert.equal(secondBody.item.view_mode, "presentation");
 
   const store = await import("../src/lib/store");
   await store.updateItem(firstBody.item.id, { status: "trash" });

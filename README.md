@@ -1,16 +1,16 @@
 # dropboard
 
-**A self-hosted review board for AI-generated deliverables.**
+**An open-source inbox and library for AI-generated deliverables.**
 
 [![CI](https://github.com/lunemis/dropboard/actions/workflows/ci.yml/badge.svg)](https://github.com/lunemis/dropboard/actions/workflows/ci.yml) ![MIT license](https://img.shields.io/badge/license-MIT-2ea44f) ![Works with any agent](https://img.shields.io/badge/agents-Claude%20Code%20·%20Codex%20·%20any-5b7db1) ![No database](https://img.shields.io/badge/database-none-c2472f)
 
-Your coding agent writes a design doc, a comparison table, a research report — and dumps it into the chat, where it's unreadable on your phone and lost in scrollback by tomorrow. dropboard gives agents one command to publish that deliverable as a real web page, and gives you a mobile-friendly inbox to read, keep, or let expire.
+Your coding agent writes a design doc, a comparison table, a research report, or a slide deck — and dumps it into chat, where it is hard to review and lost in scrollback by tomorrow. dropboard gives agents one command to publish that deliverable as a real web page, an inbox where you decide what matters, and a library for the work worth revisiting.
 
 ```
 You:   "put this on the board"
 Agent: dropboard publish out.html
        --type review --summary …
-You:   read on phone → archive
+You:   review → archive to the library
 ```
 
 ![Inbox on desktop — type seals, prominent unread labels, revision metadata, and a Temporary group with countdowns](docs/screenshots/desktop-inbox.png)
@@ -28,21 +28,21 @@ You:   read on phone → archive
 ## How it works
 
 1. **Agents publish.** One CLI call (or a REST POST) turns any HTML or Markdown into a board item with a type seal, one-line summary, and project tag. Ready-made skill files make "put this on the board" just work in Claude Code, Codex, or any agent.
-2. **You review.** A mobile-first inbox with unread marks, search, and type filters. Items render full-fidelity — interactive charts and inline JS included — inside a sandboxed viewer.
-3. **Nothing piles up.** Archive or trash with undo. And when you just wanted to *see* something, agents publish it as **ephemeral**: it sits in a Temporary group with a countdown and deletes itself in 2 hours — unless you tap Keep.
+2. **You review.** A mobile-first inbox with unread marks, search, and type filters. Documents reflow on a phone; presentation-format artifacts can declare that they need a larger screen and open fullscreen or in a new tab.
+3. **You keep a library, not a pile.** Archive useful work into projects and nested folders, or trash it with undo. When you just wanted to *see* something, agents publish it as **ephemeral**: it deletes itself in 2 hours unless you tap Keep.
 
 ## Why the name?
 
-Because that's the whole gesture: your agents **drop** deliverables on a **board**, and the board holds them until you've looked. The stamp-seal badges tell you at a glance what kind of look each one needs — a review, a decision, or just a read.
+Because that's the whole gesture: your agents **drop** deliverables on a **board**. The inbox holds them until you have looked; the library keeps the ones you want to reference later. The stamp-seal badges tell you at a glance what kind of attention each one needs.
 
 ## Why dropboard
 
 - **Agent-agnostic.** Anything that can run a CLI or hit a REST endpoint can publish: Claude Code, Codex, Cursor, aider, your own scripts. Ready-made skill/prompt files are included in [`integrations/`](integrations/).
-- **Built for review, not chat.** An inbox with unread markers, type seals (review / decision / report / info / fun), pinning, archive and trash with undo — the lifecycle a deliverable actually has. Chat transcripts and vendor artifact panes have none of this.
+- **Built for review and reference, not chat.** An inbox with unread markers and type seals leads into a searchable library with projects, folders, revisions, and stable document identities.
 - **Ephemeral when you want it.** `--temp` items expire on their own (default 2h) — "just show me this as HTML" stops polluting your inbox, and one tap keeps the ones worth saving.
-- **Self-hosted and private.** Your deliverables never leave your machine. PIN login for the UI, bearer token for the publish API, and every artifact renders inside a sandboxed iframe with a CSP — AI-generated JS can't touch your session or make external network requests.
+- **Open-source, self-hosted, and private.** Your deliverables never leave your machine. PIN login protects the UI, a bearer token protects publishing, and a restrictive iframe sandbox isolates AI-generated JS.
 - **Zero infrastructure.** No database. Each item is a folder containing `meta.json`, its original HTML/Markdown, and immutable revision files when updated. Backup is `cp -r`, search is `grep`, migration is `mv`. Beyond the web framework, the only content-processing library is a markdown renderer.
-- **Full-fidelity artifacts.** Agents can publish quick markdown notes (rendered with a clean document template) or fully interactive HTML pages with inline JS — charts, toggles, simulations all work.
+- **Full-fidelity artifacts.** Agents can publish quick Markdown notes, responsive HTML documents, or fixed-aspect presentations. Inline charts, toggles, simulations, keyboard navigation, and fullscreen all work.
 
 ## Quick start
 
@@ -97,13 +97,17 @@ available for container and reverse-proxy health checks.
 
 ```bash
 dropboard publish <file> [--title T] [--type review|decision|report|info|fun]
+                      [--view document|presentation]
                       [--project P] [--folder A/B] [--summary S]
                       [--tags a,b] [--key stable/key] [--note change]
-dropboard update <item-id> <file> [--note change] [--expected N]
+dropboard update <item-id> <file> [--view document|presentation]
+                      [--note change] [--expected N]
 dropboard list [--status inbox|archived|trash]
 ```
 
 `.md`/`.markdown` files are rendered with the built-in document template; everything else is served as-is. Titles are auto-derived from `<title>`/`<h1>`/first `#` heading.
+
+The default `--view document` is for responsive, reflowable content and keeps the mobile-first publishing rules. Use `--view presentation` for fixed-aspect decks or other keyboard-driven artifacts. Presentation cards are badged before opening, small screens get a ≥1024px notice, and both private and public viewers offer fullscreen and a direct new-tab view. Existing items need no migration and default to `document`.
 
 **Ephemeral items**: `--temp` publishes a self-destructing item (2h by default, or `--temp 30m` / `--temp 1d`) — perfect for "just show me this as HTML". Temp items sit in a *Temporary* group at the top of the inbox with a countdown; one tap on **Keep** promotes them to a regular item, otherwise they vanish on their own.
 
@@ -112,7 +116,7 @@ Or REST, from anything:
 ```bash
 curl -X POST $URL/api/items \
   -H "Authorization: Bearer $DROPBOARD_TOKEN" -H 'Content-Type: application/json' \
-  -d '{"title":"...","type":"review","summary":"...","content":"<!doctype html>...","content_type":"html"}'
+  -d '{"title":"...","type":"review","view_mode":"presentation","summary":"...","content":"<!doctype html>...","content_type":"html"}'
 ```
 
 `GET /api/items` accepts `status`, `type`, `project`, `q`, `limit` (1–500),
@@ -142,6 +146,8 @@ undo the user's deletion intent.
 
 ### Organizing the library
 
+The top-level **Library** tab is backed by the existing `archived` lifecycle
+state and `/archive` route, so API and bookmark compatibility are preserved.
 Archiving removes an item from the review queue and places it in the library.
 Items without a project or folder appear in **Unfiled**, ready for you to sort
 later. Open an item and use the folder-plus button to edit its project, nested
@@ -174,7 +180,7 @@ The point of dropboard is that you say "put it on the board" and it happens. See
 - `codex/` — symlink the same skill into `~/.codex/skills/`
 - `generic-prompt.md` — paste into any agent's system prompt
 
-Each includes artifact quality rules (self-contained HTML, mobile-first, light/dark, no external CDNs) so agents produce pages that actually read well on a phone.
+Each includes separate quality profiles for responsive documents and fixed-aspect presentations. Both stay self-contained and sandbox-safe; documents remain mobile-first while presentations may explicitly target desktop or tablet viewing.
 
 ## Configuration
 
@@ -246,7 +252,7 @@ Without it, the link uses whatever host the request came in on, which is `localh
 
 ## Security model
 
-Single-user by design. Access paths: PIN → long-lived signed session cookie (UI); bearer token (API/CLI); short-lived signed URLs (artifact iframe, which sends no cookies due to sandboxing); public share links (see above — epoch-checked so they're revocable, capped at 24h). Artifacts are rendered with `sandbox allow-scripts` and a restrictive CSP — no cookie, storage, parent-DOM, form submission, or external network access. Inline CSS/JS and embedded `data:`/`blob:` media remain available for self-contained interactive artifacts.
+Single-user by design. Access paths: PIN → long-lived signed session cookie (UI); bearer token (API/CLI); short-lived signed URLs (artifact iframe, which sends no cookies due to sandboxing); public share links (see above — epoch-checked so they're revocable, capped at 24h). Artifacts are rendered with `sandbox allow-scripts` and a restrictive CSP — no cookie, storage, parent-DOM, form submission, or external network access. The viewer delegates only fullscreen permission. Inline CSS/JS and embedded `data:`/`blob:` media remain available for self-contained interactive artifacts.
 
 ## License
 

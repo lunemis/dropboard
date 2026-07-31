@@ -8,7 +8,11 @@ import {
 const TOKEN = "e2e-token-that-is-at-least-24-characters";
 const AUTHORIZATION = { Authorization: `Bearer ${TOKEN}` };
 
-async function publish(request: APIRequestContext, title: string) {
+async function publish(
+  request: APIRequestContext,
+  title: string,
+  overrides: Record<string, unknown> = {},
+) {
   const response = await request.post("/api/items", {
     headers: AUTHORIZATION,
     data: {
@@ -17,11 +21,62 @@ async function publish(request: APIRequestContext, title: string) {
       content: `# ${title}`,
       content_type: "markdown",
       source: "playwright",
+      ...overrides,
     },
   });
   expect(response.status()).toBe(201);
   return (await response.json()).item as { id: string };
 }
+
+test("presents wide artifacts with clear viewport and fullscreen affordances", async ({
+  page,
+  request,
+}) => {
+  const title = `Presentation ${Date.now()}`;
+  const item = await publish(request, title, {
+    content: `<!doctype html>
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>${title}</title>
+      <button id="present" onclick="document.documentElement.requestFullscreen()">Present</button>`,
+    content_type: "html",
+    view_mode: "presentation",
+  });
+
+  await login(page);
+  const card = page.locator("li").filter({ hasText: title });
+  await expect(card.getByText("Presentation", { exact: true })).toBeVisible();
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`/i/${item.id}`);
+  await expect(
+    page.getByRole("heading", {
+      name: "This presentation needs a larger screen",
+    }),
+  ).toBeVisible();
+  const openInNewTab = page
+    .getByRole("link", { name: "Open in new tab" })
+    .first();
+  await expect(openInNewTab).toHaveAttribute("target", "_blank");
+  await expect(openInNewTab).toHaveAttribute("rel", "noopener");
+
+  const iframe = page.locator("iframe");
+  await expect(iframe).toHaveAttribute("sandbox", "allow-scripts");
+  await expect(iframe).toHaveAttribute("allow", "fullscreen");
+  await expect(iframe).toBeHidden();
+  await page.getByRole("button", { name: "Open anyway" }).click();
+  await expect(iframe).toBeVisible();
+
+  const artifact = page.frames().find((frame) => frame !== page.mainFrame());
+  expect(artifact).toBeTruthy();
+  expect(await artifact!.evaluate(() => document.fullscreenEnabled)).toBe(true);
+  await artifact!.locator("#present").click();
+  await expect
+    .poll(() =>
+      artifact!.evaluate(() => document.fullscreenElement?.tagName ?? null),
+    )
+    .toBe("HTML");
+  await artifact!.evaluate(() => document.exitFullscreen());
+});
 
 async function patchItem(
   request: APIRequestContext,
@@ -53,6 +108,7 @@ test("organizes multiple archived documents in one action", async ({
 
   await login(page);
   await page.goto("/archive");
+  await expect(page.getByRole("link", { name: "Library" })).toBeVisible();
   await page.getByRole("button", { name: "Select", exact: true }).click();
   await page.getByLabel(`Select Bulk first ${suffix}`).check();
   await page.getByLabel(`Select Bulk second ${suffix}`).check();

@@ -1,9 +1,10 @@
 # dropboard - Project Context
 
 ## Overview
-dropboard는 AI 에이전트가 만든 산출물(설계서, 분석, 리포트, 재미 콘텐츠)을
-self-contained HTML/Markdown 페이지로 게시하고, 사용자가 모바일 웹에서 리뷰·아카이브·삭제하는
-**셀프호스팅 AI 산출물 리뷰 보드**다.
+dropboard는 AI 에이전트가 만든 산출물(설계서, 분석, 리포트, 프레젠테이션,
+재미 콘텐츠)을 self-contained HTML/Markdown 페이지로 게시하고, 사용자가
+받은함에서 리뷰한 뒤 라이브러리에 정리하는 **오픈소스 AI 산출물 받은함과
+라이브러리**다.
 
 핵심 흐름: 대화 중 "board에 올려줘" → 에이전트가 페이지 제작 후 `dropboard publish` → 사용자가 보드 웹에서 리뷰.
 
@@ -15,11 +16,13 @@ self-contained HTML/Markdown 페이지로 게시하고, 사용자가 모바일 �
 ## Key Conventions
 - 항목 상태: `inbox | archived | trash` — 파일 이동 없이 meta.json의 status만 변경
 - 휴지통 정리: 서버 내장 스위퍼(`src/instrumentation.ts`, 15분마다, `DROPBOARD_TRASH_TTL_DAYS`) — 외부 스케줄러 불필요
-- 뷰어는 `<iframe sandbox="allow-scripts">`로 산출물 격리 (`allow-same-origin` 금지). raw 접근은 서명 URL/공유 링크/Bearer/세션 4중 허용
+- 뷰어는 `<iframe sandbox="allow-scripts" allow="fullscreen">`로 산출물 격리 (`allow-same-origin` 금지). raw 접근은 서명 URL/공유 링크/Bearer/세션 4중 허용
 - 공유 링크(`/s/[id]`)는 PIN 없이 특정 아이템 하나만 노출. 서명에 `meta.share_epoch`를 포함시켜서, epoch를 올리면(회수/재공유) 그 전에 발급된 링크가 만료 전이라도 전부 무효화됨. 고정 24시간 TTL
 - 공유 링크의 base URL은 `DROPBOARD_PUBLIC_URL`(선택) — 없으면 요청 호스트를 그대로 씀(로컬 접속 시 `localhost`가 되어 공유 무의미). 머신 전용 값(LAN IP 등)은 `.env.local`에
 - 쓰기 API는 `DROPBOARD_TOKEN` Bearer, UI는 PIN(6자리, 5회 실패 15분 잠금) + 180일 세션 쿠키
 - 산출물은 self-contained HTML (외부 CDN 의존 금지, 인라인 CSS/JS, 5MB 제한)
+- 표시 형식은 `view_mode: document | presentation`. 기존 항목은 `document`로
+  정규화하고 리비전마다 형식을 보존한다.
 - UI 문자열은 `src/lib/i18n.ts` 경유 (기본 en, `NEXT_PUBLIC_DROPBOARD_LOCALE=ko`) — 하드코딩 금지
 - 코드 주석·CLI 출력 영어. 특정 머신 전용 값(포트·경로·도메인)은 코드에 넣지 않는다 — env/배포 설정으로
 - 에이전트 통합 템플릿은 `integrations/` (claude-code / codex / generic)
@@ -27,7 +30,7 @@ self-contained HTML/Markdown 페이지로 게시하고, 사용자가 모바일 �
 ## Routes
 ```
 /          — Inbox (미읽음/핀/유형 뱃지/검색)
-/archive   — 보관함
+/archive   — Library (`archived` 상태는 API 호환을 위해 유지)
 /trash     — 휴지통 (TTL 후 자동 영구삭제)
 /i/[id]    — 뷰어 (sandbox iframe)
 /s/[id]    — 공개 공유 뷰어 (PIN 불필요, 서명+epoch 검증, 24h TTL)

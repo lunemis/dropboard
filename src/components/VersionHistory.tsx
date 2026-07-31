@@ -160,7 +160,8 @@ export function VersionHistory({
                         {revision.note || t.revisionNoteFallback}
                       </span>
                       <span className="mt-2 block font-mono text-[9px] text-[var(--muted-soft)]">
-                        {revision.source} · {revision.content_type}
+                        {revision.source} · {revision.content_type} ·{" "}
+                        {revision.view_mode}
                       </span>
                     </button>
                     {!current && selected && (

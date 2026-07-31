@@ -57,16 +57,23 @@ test("restoring an old version creates a new revision without deleting history",
     title: "Spec",
     type: "review",
     content: "original",
+    view_mode: "presentation",
   });
   await store.addRevision(created.id, {
     content: "changed",
     content_type: "html",
+    view_mode: "document",
   });
   const restored = await store.restoreRevision(created.id, 1, "test");
   assert.equal(restored?.revision, 3);
+  assert.equal(restored?.view_mode, "presentation");
   assert.equal((await store.readContent(created.id))?.content, "original");
   const history = await store.listRevisions(created.id);
   assert.equal(history?.[0].note, "Restored from v1");
+  assert.deepEqual(
+    history?.map((revision) => revision.view_mode),
+    ["presentation", "document", "presentation"],
+  );
 });
 
 test("a document key updates one stable item and preserves organization", async () => {
@@ -78,6 +85,7 @@ test("a document key updates one stable item and preserves organization", async 
     folder: "Reports",
     tags: ["weekly"],
     document_key: "dropboard/weekly-report",
+    view_mode: "presentation",
   });
   const second = await store.createOrUpdateItem({
     title: "Recurring report",
@@ -90,6 +98,7 @@ test("a document key updates one stable item and preserves organization", async 
   assert.equal(second.item.id, first.item.id);
   assert.equal(second.item.revision, 2);
   assert.equal(second.item.type, "report");
+  assert.equal(second.item.view_mode, "presentation");
   assert.equal(second.item.project, "Dropboard");
   assert.equal(second.item.folder, "Reports");
   assert.deepEqual(second.item.tags, ["weekly"]);

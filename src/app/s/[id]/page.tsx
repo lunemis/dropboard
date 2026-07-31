@@ -2,6 +2,7 @@ import { verifyShareSig } from "../../../lib/session";
 import { getItem, isValidId } from "../../../lib/store";
 import { t } from "../../../lib/i18n";
 import { BrandMark } from "../../../components/Brand";
+import { ArtifactFrame } from "../../../components/ArtifactFrame";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -44,12 +45,27 @@ export default async function SharePage({ params, searchParams }: Props) {
         <h1 className="min-w-0 flex-1 truncate text-sm font-semibold">
           {item.title}
         </h1>
+        {item.view_mode === "presentation" && (
+          <span className="hidden rounded-full bg-[var(--violet-soft)] px-2 py-1 font-mono text-[9px] font-semibold tracking-wide text-[var(--violet)] uppercase sm:inline">
+            {t.presentation}
+          </span>
+        )}
+        <a
+          href={rawUrl}
+          target="_blank"
+          rel="noopener"
+          aria-label={t.openNewTab}
+          title={t.openNewTab}
+          className="flex h-10 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-xs font-semibold text-[var(--muted)] hover:bg-[var(--surface-2)]"
+        >
+          <span aria-hidden="true">↗</span>
+          <span className="hidden sm:inline">{t.openNewTab}</span>
+        </a>
       </header>
-      <iframe
-        sandbox="allow-scripts"
+      <ArtifactFrame
         src={rawUrl}
         title={item.title}
-        className="w-full flex-1 border-0 bg-white"
+        viewMode={item.view_mode}
       />
     </div>
   );

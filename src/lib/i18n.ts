@@ -5,9 +5,9 @@ export const LOCALE: Locale =
 
 const STRINGS = {
   en: {
-    brandTagline: "A calm review space for AI deliverables",
+    brandTagline: "Open-source inbox and library for AI deliverables",
     inbox: "Inbox",
-    archive: "Archive",
+    archive: "Library",
     trash: "Trash",
     all: "All",
     unread: (n: number) => `${n} unread`,
@@ -55,6 +55,12 @@ const STRINGS = {
     widthNarrow: "Narrow",
     widthWide: "Wide",
     widthFull: "Full",
+    presentation: "Presentation",
+    presentationNoticeTitle: "This presentation needs a larger screen",
+    presentationNoticeHint:
+      "Best viewed at 1024px or wider. Open it in a new tab on a desktop or continue here if you prefer.",
+    openNewTab: "Open in new tab",
+    openAnyway: "Open anyway",
     actionShare: "Share",
     toastShareCopied: "Share link copied — valid for 24h",
     toastShareRevoked: "Share link deactivated",
@@ -124,9 +130,9 @@ const STRINGS = {
     versionLoadFailed: "Couldn't load version history",
   },
   ko: {
-    brandTagline: "AI 산출물을 차분하게 검토하는 공간",
+    brandTagline: "AI 산출물을 위한 오픈소스 받은함과 라이브러리",
     inbox: "받은함",
-    archive: "보관함",
+    archive: "라이브러리",
     trash: "휴지통",
     all: "전체",
     unread: (n: number) => `${n} 미읽음`,
@@ -176,6 +182,12 @@ const STRINGS = {
     widthNarrow: "좁게",
     widthWide: "넓게",
     widthFull: "전체",
+    presentation: "프레젠테이션",
+    presentationNoticeTitle: "이 프레젠테이션은 큰 화면이 필요합니다",
+    presentationNoticeHint:
+      "1024px 이상의 화면을 권장합니다. 데스크톱에서 새 탭으로 열거나 여기에서 계속 볼 수 있습니다.",
+    openNewTab: "새 탭에서 열기",
+    openAnyway: "그래도 열기",
     actionShare: "공유",
     toastShareCopied: "공유 링크를 복사했습니다 — 24시간 동안 유효",
     toastShareRevoked: "공유 링크를 비활성화했습니다",

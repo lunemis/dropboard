@@ -20,8 +20,14 @@ import {
   VersionHistory,
   type RevisionWithUrl,
 } from "../../../components/VersionHistory";
+import { ArtifactFrame } from "../../../components/ArtifactFrame";
 import { remainTime, t } from "../../../lib/i18n";
-import type { ItemMeta, ItemStatus } from "../../../lib/types";
+import type {
+  ContentType,
+  ItemMeta,
+  ItemStatus,
+  ItemViewMode,
+} from "../../../lib/types";
 import { useStoredChoice } from "../../../lib/useStoredChoice";
 
 const LIST_PATH: Record<ItemStatus, string> = {
@@ -58,6 +64,10 @@ export default function ViewerPage() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [selectedRevision, setSelectedRevision] = useState<number | null>(null);
   const [previewRawUrl, setPreviewRawUrl] = useState<string | null>(null);
+  const [previewContentType, setPreviewContentType] =
+    useState<ContentType | null>(null);
+  const [previewViewMode, setPreviewViewMode] =
+    useState<ItemViewMode | null>(null);
   const shareToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const showShareToast = (toastValue: ShareToast | null) => {
@@ -149,12 +159,16 @@ export default function ViewerPage() {
   const selectRevision = (revision: RevisionWithUrl | null) => {
     setSelectedRevision(revision?.revision ?? null);
     setPreviewRawUrl(revision?.raw_url ?? null);
+    setPreviewContentType(revision?.content_type ?? null);
+    setPreviewViewMode(revision?.view_mode ?? null);
   };
 
   const revisionRestored = (item: ItemMeta, restoredFrom: number) => {
     setMeta(item);
     setSelectedRevision(null);
     setPreviewRawUrl(null);
+    setPreviewContentType(null);
+    setPreviewViewMode(null);
     setHistoryOpen(false);
     setRawUrl((current) =>
       current
@@ -239,6 +253,14 @@ export default function ViewerPage() {
     }
   };
 
+  const displayedContentType = previewContentType ?? meta?.content_type;
+  const displayedViewMode = previewViewMode ?? meta?.view_mode ?? "document";
+  const baseArtifactUrl = previewRawUrl ?? rawUrl;
+  const artifactUrl =
+    baseArtifactUrl && displayedContentType === "markdown"
+      ? `${baseArtifactUrl}${baseArtifactUrl.includes("?") ? "&" : "?"}w=${viewerWidth}`
+      : baseArtifactUrl;
+
   if (notFound || loadFailed) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3">
@@ -270,7 +292,12 @@ export default function ViewerPage() {
         <h1 className="min-w-0 flex-1 truncate text-sm font-semibold">
           {meta?.title ?? ""}
         </h1>
-        {meta?.content_type === "markdown" && (
+        {displayedViewMode === "presentation" && (
+          <span className="hidden rounded-full bg-[var(--violet-soft)] px-2 py-1 font-mono text-[9px] font-semibold tracking-wide text-[var(--violet)] uppercase sm:inline">
+            {t.presentation}
+          </span>
+        )}
+        {displayedContentType === "markdown" && (
           <div
             className="hidden items-center gap-1 sm:flex"
             role="group"
@@ -295,6 +322,21 @@ export default function ViewerPage() {
               </button>
             ))}
           </div>
+        )}
+        {artifactUrl && (
+          <a
+            href={artifactUrl}
+            target="_blank"
+            rel="noopener"
+            aria-label={t.openNewTab}
+            title={t.openNewTab}
+            className="hidden h-11 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-[var(--muted)] active:bg-[var(--surface-2)] sm:flex"
+          >
+            <OpenNewIcon />
+            <span className="hidden text-xs font-semibold lg:inline">
+              {t.openNewTab}
+            </span>
+          </a>
         )}
         {meta && (
           <button
@@ -418,16 +460,12 @@ export default function ViewerPage() {
           </button>
         </div>
       )}
-      {meta && rawUrl ? (
-        <iframe
-          sandbox="allow-scripts"
-          src={
-            meta.content_type === "markdown"
-              ? `${previewRawUrl ?? rawUrl}${(previewRawUrl ?? rawUrl).includes("?") ? "&" : "?"}w=${viewerWidth}`
-              : previewRawUrl ?? rawUrl
-          }
+      {meta && artifactUrl ? (
+        <ArtifactFrame
+          key={`${artifactUrl}:${displayedViewMode}`}
+          src={artifactUrl}
           title={meta.title}
-          className="w-full flex-1 border-0 bg-white"
+          viewMode={displayedViewMode}
         />
       ) : (
         <p className="py-16 text-center text-sm text-[var(--muted)]">
@@ -479,6 +517,26 @@ function ShareIcon() {
       <circle cx="18" cy="19" r="3" />
       <path d="M8.6 10.5 15.4 6.5" />
       <path d="M8.6 13.5 15.4 17.5" />
+    </svg>
+  );
+}
+
+function OpenNewIcon() {
+  return (
+    <svg
+      width="17"
+      height="17"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M14 5h5v5" />
+      <path d="M10 14 19 5" />
+      <path d="M19 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5" />
     </svg>
   );
 }

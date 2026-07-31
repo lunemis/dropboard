@@ -1,14 +1,16 @@
 #!/usr/bin/env node
 /**
- * dropboard — publish AI deliverables to the dropboard review board.
+ * dropboard — publish AI deliverables to your dropboard inbox and library.
  *
  * Usage:
  *   dropboard publish <file> [--title T] [--type review|decision|report|info|fun]
+ *                         [--view document|presentation]
  *                         [--project P] [--folder A/B] [--summary S]
  *                         [--tags a,b] [--source S]
  *                         [--key stable/key] [--note change-summary]
  *                         [--server URL]
  *   dropboard update <item-id> <file> [--title T] [--type T] [--summary S]
+ *                         [--view document|presentation]
  *                         [--note change-summary] [--expected N]
  *   dropboard list [--status inbox|archived|trash]
  *
@@ -22,6 +24,7 @@ import os from "node:os";
 
 const CONFIG_PATH = path.join(os.homedir(), ".config", "dropboard", "config.json");
 const TYPES = ["review", "decision", "report", "info", "fun"];
+const VIEW_MODES = ["document", "presentation"];
 
 function loadConfig() {
   try {
@@ -88,6 +91,9 @@ async function publish(argv) {
   const isMarkdown = /\.(md|markdown)$/i.test(file);
   const type = flags.type || "info";
   if (!TYPES.includes(type)) die(`type must be one of: ${TYPES.join(", ")}`);
+  if (flags.view && !VIEW_MODES.includes(flags.view)) {
+    die(`view must be one of: ${VIEW_MODES.join(", ")}`);
+  }
 
   const cfg = loadConfig();
   const url = serverUrl(flags, cfg);
@@ -105,6 +111,7 @@ async function publish(argv) {
     source: flags.source || "dropboard-cli",
   };
   if (flags.type || !flags.key) body.type = type;
+  if (flags.view) body.view_mode = flags.view;
   if (flags.project) body.project = flags.project;
   if (flags.folder) body.folder = flags.folder;
   if (flags.key) body.document_key = flags.key;
@@ -156,6 +163,9 @@ async function update(argv) {
   if (flags.type && !TYPES.includes(flags.type)) {
     die(`type must be one of: ${TYPES.join(", ")}`);
   }
+  if (flags.view && !VIEW_MODES.includes(flags.view)) {
+    die(`view must be one of: ${VIEW_MODES.join(", ")}`);
+  }
   let content;
   try {
     content = await readFile(file, "utf8");
@@ -170,6 +180,7 @@ async function update(argv) {
   };
   if (flags.title) body.title = flags.title;
   if (flags.type) body.type = flags.type;
+  if (flags.view) body.view_mode = flags.view;
   if (flags.summary) body.summary = flags.summary;
   if (flags.note) body.revision_note = flags.note;
   if (flags.expected) {
@@ -234,15 +245,17 @@ if (cmd === "publish") await publish(rest);
 else if (cmd === "update") await update(rest);
 else if (cmd === "list") await list(rest);
 else {
-  console.log(`dropboard — publish AI deliverables to your review board
+  console.log(`dropboard — publish AI deliverables to your inbox and library
 
 commands:
   dropboard publish <file> [--title T] [--type ${TYPES.join("|")}]
+                        [--view ${VIEW_MODES.join("|")}]
                         [--temp [30m|2h|1d]]   # ephemeral: auto-deletes (default 2h)
                         [--project P] [--folder A/B] [--summary S]
                         [--tags a,b] [--server URL]
                         [--key stable/key] [--note change-summary]
   dropboard update <item-id> <file> [--title T] [--type T] [--summary S]
+                        [--view ${VIEW_MODES.join("|")}]
                         [--note change-summary] [--expected N]
   dropboard list [--status inbox|archived|trash]
 

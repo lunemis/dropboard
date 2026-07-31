@@ -17,6 +17,7 @@ function item(overrides: Partial<ItemMeta> = {}): ItemMeta {
     updated_at: "2026-07-21T00:00:00.000Z",
     content_type: "markdown",
     content_file: "item-1.md",
+    view_mode: "document",
     project: null,
     folder: null,
     tags: [],

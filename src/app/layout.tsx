@@ -5,7 +5,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   applicationName: "Dropboard",
   title: "Dropboard",
-  description: "A review board for AI-generated deliverables",
+  description: "Open-source inbox and library for AI-generated deliverables",
 };
 
 export const viewport: Viewport = {

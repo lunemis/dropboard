@@ -41,6 +41,7 @@ test("revision API appends and lists signed immutable versions", async () => {
       body: JSON.stringify({
         content: "v2",
         content_type: "html",
+        view_mode: "presentation",
         revision_note: "Updated copy",
         expected_revision: 1,
       }),
@@ -57,6 +58,23 @@ test("revision API appends and lists signed immutable versions", async () => {
     [2, 1],
   );
   assert.match(body.revisions[0].raw_url, /v=2.*st=/);
+  assert.equal(body.revisions[0].view_mode, "presentation");
+});
+
+test("revision API rejects an invalid view mode", async () => {
+  const response = await POST(
+    new Request(`http://localhost/api/items/${itemId}/revisions`, {
+      method: "POST",
+      body: JSON.stringify({
+        content: "invalid view",
+        content_type: "html",
+        view_mode: "canvas",
+      }),
+    }),
+    { params: Promise.resolve({ id: itemId }) },
+  );
+  assert.equal(response.status, 400);
+  assert.match((await response.json()).error, /view_mode/);
 });
 
 test("revision API returns a conflict for a stale expected version", async () => {

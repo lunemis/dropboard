@@ -11,8 +11,10 @@ import {
 import {
   ITEM_STATUSES,
   ITEM_TYPES,
+  ITEM_VIEW_MODES,
   type ItemStatus,
   type ItemType,
+  type ItemViewMode,
 } from "../../../lib/types";
 
 const MAX_CONTENT_BYTES = 5 * 1024 * 1024;
@@ -106,6 +108,7 @@ export async function POST(req: NextRequest) {
   const content = typeof body.content === "string" ? body.content : "";
   const type = (body.type ?? "info") as ItemType;
   const contentType = (body.content_type ?? "html") as "html" | "markdown";
+  const viewMode = (body.view_mode ?? "document") as ItemViewMode;
 
   if (!title || title.length > 200) {
     return NextResponse.json(
@@ -131,6 +134,12 @@ export async function POST(req: NextRequest) {
   if (contentType !== "html" && contentType !== "markdown") {
     return NextResponse.json(
       { error: "content_type must be html or markdown" },
+      { status: 400 },
+    );
+  }
+  if (!ITEM_VIEW_MODES.includes(viewMode)) {
+    return NextResponse.json(
+      { error: `view_mode must be one of: ${ITEM_VIEW_MODES.join(", ")}` },
       { status: 400 },
     );
   }
@@ -270,6 +279,7 @@ export async function POST(req: NextRequest) {
       update_type: body.type !== undefined ? type : undefined,
       content,
       content_type: contentType,
+      view_mode: body.view_mode !== undefined ? viewMode : undefined,
       project: project || undefined,
       folder: folder || undefined,
       tags:
