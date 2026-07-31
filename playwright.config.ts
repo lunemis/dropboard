@@ -29,6 +29,7 @@ export default defineConfig({
         "e2e-session-secret-that-is-at-least-32-characters",
       NEXT_PUBLIC_DROPBOARD_LOCALE: "en",
       DROPBOARD_E2E_PORT: String(port),
+      DROPBOARD_NEXT_DIST_DIR: ".next-e2e",
     },
   },
   projects: [
