@@ -6,6 +6,15 @@ Notable changes to dropboard are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Runtime storage paths no longer make production file tracing copy project
+  sources, tests, documentation, or local board data into standalone output.
+
+### Security
+
+- PostCSS is pinned to 8.5.25 to address GHSA-r28c-9q8g-f849.
+
 ## [0.1.0] - 2026-07-22
 
 The first public preview of dropboard: a private, self-hosted review board for

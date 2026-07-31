@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && node scripts/validate-file-trace.mjs",
     "start": "next start",
     "lint": "eslint",
     "test": "tsx --test tests/*.test.ts",
@@ -57,7 +57,7 @@
   },
   "overrides": {
     "next": {
-      "postcss": "8.5.16",
+      "postcss": "8.5.25",
       "sharp": "0.35.3"
     }
   }
