@@ -7,6 +7,8 @@ export function BrandMark({ className = "h-8 w-8" }: BrandMarkProps) {
     <svg
       aria-hidden="true"
       className={className}
+      width="32"
+      height="32"
       viewBox="0 0 32 32"
       fill="none"
     >

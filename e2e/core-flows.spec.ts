@@ -92,7 +92,10 @@ async function patchItem(
 
 async function login(page: Page) {
   await page.goto("/login");
-  await page.getByLabel("PIN").fill("123456");
+  const pin = page.getByLabel("PIN");
+  await expect(pin).toBeVisible();
+  await pin.fill("123456");
+  await pin.press("Enter");
   await expect(page).toHaveURL(/\/$/);
 }
 
