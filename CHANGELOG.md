@@ -25,6 +25,8 @@ Notable changes to dropboard are documented here. The format follows
 
 ### Fixed
 
+- Browser E2E builds now use an isolated `.next-e2e` directory, preventing test
+  builds from replacing the assets of a live server using the same checkout.
 - PIN login now uses a visible native input and submit button, supports Enter,
   and keeps the brand mark bounded even if application CSS is unavailable.
 - Runtime storage paths no longer make production file tracing copy project
