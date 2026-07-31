@@ -18,16 +18,22 @@ const ID_RE = /^\d{8}-\d{6}-[a-z0-9]{4}$/;
 const itemLocks = new Map<string, Promise<void>>();
 const documentKeyLocks = new Map<string, Promise<void>>();
 
+function storePath(...segments: string[]): string {
+  // Store contents are runtime data, not deployment inputs. Without this hint,
+  // Turbopack expands dynamic item paths into a trace of the whole project.
+  return path.join(/* turbopackIgnore: true */ ...segments);
+}
+
 export function isValidId(id: string): boolean {
   return ID_RE.test(id);
 }
 
 function itemDir(id: string): string {
-  return path.join(DATA_DIR, id);
+  return storePath(DATA_DIR, id);
 }
 
 function revisionDir(id: string, revision: number): string {
-  return path.join(itemDir(id), "revisions", String(revision).padStart(6, "0"));
+  return storePath(itemDir(id), "revisions", String(revision).padStart(6, "0"));
 }
 
 function now(): string {
@@ -160,7 +166,7 @@ async function withDocumentKeyLock<T>(
 
 async function readMeta(id: string): Promise<ItemMeta | null> {
   try {
-    const raw = await fs.readFile(path.join(itemDir(id), "meta.json"), "utf8");
+    const raw = await fs.readFile(storePath(itemDir(id), "meta.json"), "utf8");
     const parsed: unknown = JSON.parse(raw);
     if (!isItemMeta(parsed, id)) {
       console.warn(`[dropboard] ignoring invalid metadata for item ${id}`);
@@ -192,8 +198,8 @@ async function readMeta(id: string): Promise<ItemMeta | null> {
 }
 
 async function writeMeta(meta: ItemMeta): Promise<void> {
-  const destination = path.join(itemDir(meta.id), "meta.json");
-  const temporary = path.join(itemDir(meta.id), `.meta-${randomUUID()}.tmp`);
+  const destination = storePath(itemDir(meta.id), "meta.json");
+  const temporary = storePath(itemDir(meta.id), `.meta-${randomUUID()}.tmp`);
   const handle = await fs.open(temporary, "wx");
   try {
     try {
@@ -226,7 +232,7 @@ export function isExpired(meta: ItemMeta): boolean {
 export async function listItems(filter: ListFilter): Promise<ItemMeta[]> {
   let entries: string[];
   try {
-    entries = await fs.readdir(DATA_DIR);
+    entries = await fs.readdir(storePath(DATA_DIR));
   } catch {
     return [];
   }
@@ -317,7 +323,7 @@ export async function createItem(input: CreateItemInput): Promise<ItemMeta> {
 
   try {
     await fs.writeFile(
-      path.join(itemDir(id), contentFile),
+      storePath(itemDir(id), contentFile),
       input.content,
       "utf8",
     );
@@ -464,23 +470,23 @@ async function writeRevisionDirectory(
   meta: RevisionMeta,
   content?: string,
 ): Promise<void> {
-  const revisionsDir = path.join(itemDir(id), "revisions");
+  const revisionsDir = storePath(itemDir(id), "revisions");
   await fs.mkdir(revisionsDir, { recursive: true });
   const destination = revisionDir(id, meta.revision);
-  const temporary = path.join(
+  const temporary = storePath(
     revisionsDir,
     `.${String(meta.revision).padStart(6, "0")}-${randomUUID()}.tmp`,
   );
   await fs.mkdir(temporary);
   try {
     await fs.writeFile(
-      path.join(temporary, "meta.json"),
+      storePath(temporary, "meta.json"),
       JSON.stringify(meta, null, 2) + "\n",
       "utf8",
     );
     if (content !== undefined) {
       await fs.writeFile(
-        path.join(temporary, meta.content_file),
+        storePath(temporary, meta.content_file),
         content,
         "utf8",
       );
@@ -494,7 +500,7 @@ async function writeRevisionDirectory(
 
 async function ensureInitialRevision(item: ItemMeta): Promise<void> {
   try {
-    await fs.access(path.join(revisionDir(item.id, 1), "meta.json"));
+    await fs.access(storePath(revisionDir(item.id, 1), "meta.json"));
     return;
   } catch {
     // Legacy and newly created items keep v1 content at the item root. Snapshot
@@ -514,7 +520,7 @@ async function readStoredRevisionMeta(
   try {
     const parsed: unknown = JSON.parse(
       await fs.readFile(
-        path.join(revisionDir(id, revision), "meta.json"),
+        storePath(revisionDir(id, revision), "meta.json"),
         "utf8",
       ),
     );
@@ -621,10 +627,14 @@ export async function readRevisionContent(
   if (!meta) return null;
   const contentPath =
     revision === 1
-      ? path.join(itemDir(id), meta.content_file)
-      : path.join(revisionDir(id, revision), meta.content_file);
+      ? storePath(itemDir(id), meta.content_file)
+      : storePath(revisionDir(id, revision), meta.content_file);
   try {
-    return { meta, item, content: await fs.readFile(contentPath, "utf8") };
+    return {
+      meta,
+      item,
+      content: await fs.readFile(storePath(contentPath), "utf8"),
+    };
   } catch {
     return null;
   }
@@ -719,7 +729,7 @@ export async function sweepStorage(
   const trashCutoff = Date.now() - trashTtlDays * 86400_000;
   let entries: string[] = [];
   try {
-    entries = await fs.readdir(DATA_DIR);
+    entries = await fs.readdir(storePath(DATA_DIR));
   } catch {
     return { removed: 0 };
   }

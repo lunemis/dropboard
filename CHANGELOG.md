@@ -6,6 +6,11 @@ Notable changes to dropboard are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Runtime storage paths no longer make production file tracing copy project
+  sources, tests, documentation, or local board data into standalone output.
+
 ## [0.1.0] - 2026-07-22
 
 The first public preview of dropboard: a private, self-hosted review board for
