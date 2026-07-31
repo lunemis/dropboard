@@ -261,22 +261,6 @@ a {
   backdrop-filter: blur(20px) saturate(1.12);
 }
 
-.pin-cell {
-  background: var(--surface-muted);
-  box-shadow: 0 1px 0 rgb(255 255 255 / 0.45) inset;
-  color: var(--ink);
-  transition:
-    transform 120ms ease,
-    border-color 120ms ease,
-    background 120ms ease;
-}
-
-.pin-cell--filled {
-  transform: translateY(-2px);
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
-}
-
 @media (hover: hover) {
   .artifact-card:hover {
     transform: translateY(-1px);

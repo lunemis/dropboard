@@ -25,6 +25,8 @@ Notable changes to dropboard are documented here. The format follows
 
 ### Fixed
 
+- PIN login now uses a visible native input and submit button, supports Enter,
+  and keeps the brand mark bounded even if application CSS is unavailable.
 - Runtime storage paths no longer make production file tracing copy project
   sources, tests, documentation, or local board data into standalone output.
 
