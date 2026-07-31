@@ -4,6 +4,7 @@ import path from "node:path";
 import {
   ITEM_STATUSES,
   ITEM_TYPES,
+  ITEM_VIEW_MODES,
   type CreateItemInput,
   type CreateRevisionInput,
   type ItemMeta,
@@ -52,6 +53,7 @@ function revisionMetaFromItem(
     summary: item.summary,
     content_file: item.content_file,
     content_type: item.content_type,
+    view_mode: item.view_mode,
     created_at: revision === 1 ? item.created_at : item.updated_at,
     source: item.source,
     note,
@@ -71,6 +73,8 @@ function isRevisionMeta(
     ITEM_TYPES.includes(meta.type as ItemType) &&
     typeof meta.summary === "string" &&
     (contentType === "html" || contentType === "markdown") &&
+    (meta.view_mode === undefined ||
+      ITEM_VIEW_MODES.includes(meta.view_mode as ItemMeta["view_mode"])) &&
     meta.content_file ===
       (contentType === "markdown" ? "index.md" : "index.html") &&
     typeof meta.created_at === "string" &&
@@ -108,6 +112,8 @@ function isItemMeta(value: unknown, expectedId: string): boolean {
     meta.tags.every((tag) => typeof tag === "string") &&
     typeof meta.summary === "string" &&
     meta.content_file === expectedContentFile &&
+    (meta.view_mode === undefined ||
+      ITEM_VIEW_MODES.includes(meta.view_mode as ItemMeta["view_mode"])) &&
     ITEM_STATUSES.includes(meta.status as ItemStatus) &&
     typeof meta.pinned === "boolean" &&
     (meta.read_at === null || typeof meta.read_at === "string") &&
@@ -174,17 +180,19 @@ async function readMeta(id: string): Promise<ItemMeta | null> {
     }
     const legacyMeta = parsed as Omit<
       ItemMeta,
-      "folder" | "document_key" | "revision"
+      "folder" | "document_key" | "revision" | "view_mode"
     > & {
       folder?: string | null;
       document_key?: string | null;
       revision?: number;
+      view_mode?: ItemMeta["view_mode"];
     };
     return {
       ...legacyMeta,
       folder: legacyMeta.folder ?? null,
       document_key: legacyMeta.document_key ?? null,
       revision: legacyMeta.revision ?? 1,
+      view_mode: legacyMeta.view_mode ?? "document",
     };
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
@@ -309,6 +317,7 @@ export async function createItem(input: CreateItemInput): Promise<ItemMeta> {
     summary: input.summary ?? "",
     content_file: contentFile,
     content_type: contentType,
+    view_mode: input.view_mode ?? "document",
     status: "inbox",
     pinned: false,
     read_at: null,
@@ -524,7 +533,14 @@ async function readStoredRevisionMeta(
         "utf8",
       ),
     );
-    return isRevisionMeta(parsed, revision) ? parsed : null;
+    if (!isRevisionMeta(parsed, revision)) return null;
+    const legacyMeta = parsed as Omit<RevisionMeta, "view_mode"> & {
+      view_mode?: RevisionMeta["view_mode"];
+    };
+    return {
+      ...legacyMeta,
+      view_mode: legacyMeta.view_mode ?? "document",
+    };
   } catch {
     return null;
   }
@@ -560,6 +576,7 @@ export async function addRevision(
       summary: input.summary ?? item.summary,
       content_file: contentFile,
       content_type: contentType,
+      view_mode: input.view_mode ?? item.view_mode,
       created_at: timestamp,
       source: input.source ?? "unknown",
       note: input.note?.trim() || null,
@@ -573,6 +590,7 @@ export async function addRevision(
     item.summary = revisionMeta.summary;
     item.content_file = revisionMeta.content_file;
     item.content_type = revisionMeta.content_type;
+    item.view_mode = revisionMeta.view_mode;
     item.source = revisionMeta.source;
     item.status = "inbox";
     item.read_at = null;
@@ -650,6 +668,7 @@ export async function restoreRevision(
   return addRevision(id, {
     content: target.content,
     content_type: target.meta.content_type,
+    view_mode: target.meta.view_mode,
     title: target.meta.title,
     type: target.meta.type,
     summary: target.meta.summary,
@@ -680,6 +699,7 @@ export async function createOrUpdateItem(
       type: input.update_type,
       content: input.content,
       content_type: input.content_type ?? "html",
+      view_mode: input.view_mode,
       summary: input.summary,
       source: input.source,
       note: input.revision_note,

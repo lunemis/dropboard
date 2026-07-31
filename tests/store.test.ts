@@ -25,6 +25,7 @@ test("creates, reads, lists, and updates an item", async () => {
     content_type: "markdown",
   });
   assert.equal(store.isValidId(item.id), true);
+  assert.equal(item.view_mode, "document");
   assert.equal((await store.getItem(item.id))?.title, "Test item");
   assert.equal((await store.readContent(item.id))?.content, "# Hello");
   assert.deepEqual((await store.listItems({ status: "inbox" })).map((i) => i.id), [item.id]);
@@ -46,6 +47,20 @@ test("creates, reads, lists, and updates an item", async () => {
 
   const revoked = await store.revokeShares(item.id);
   assert.equal(revoked?.share_epoch, 1);
+});
+
+test("normalizes legacy items without a view mode", async () => {
+  const item = await store.createItem({
+    title: "Legacy document",
+    type: "info",
+    content: "legacy",
+  });
+  const metaPath = path.join(dataDir, item.id, "meta.json");
+  const legacyMeta = JSON.parse(await readFile(metaPath, "utf8"));
+  delete legacyMeta.view_mode;
+  await writeFile(metaPath, JSON.stringify(legacyMeta));
+
+  assert.equal((await store.getItem(item.id))?.view_mode, "document");
 });
 
 test("zero trash TTL preserves trash while expired temp items are swept", async () => {

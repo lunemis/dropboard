@@ -1,13 +1,13 @@
 ---
 name: board
-description: Publish AI deliverables (design docs, analyses, reports, fun content) to the user's dropboard review board as web pages. Use when the user says "put this on the board", "publish to the board", "board에 올려줘", or asks to make a long deliverable readable on mobile.
+description: Publish AI deliverables (documents, analyses, reports, presentations, fun content) to the user's dropboard inbox and library as web pages. Use when the user says "put this on the board", "publish to the board", "board에 올려줘", or asks to make a deliverable easy to review outside chat.
 ---
 
 # board — publish deliverables to dropboard
 
-dropboard is the user's personal review board. Publish conversation deliverables as
-self-contained web pages; the user reviews them on the board (including on mobile)
-and archives/deletes them there.
+dropboard is the user's personal inbox and library for AI deliverables. Publish
+conversation deliverables as self-contained web pages; the user reviews them in
+the inbox and archives useful work into the library.
 
 ## Pick the mode first
 
@@ -31,6 +31,7 @@ press Keep to retain one. When unsure, publish as keep — deleting is easy.
 2. **Publish**:
    ```bash
    dropboard publish <file> --type <type> --project <project-slug> \
+     [--view <document|presentation>] \
      [--folder <parent/child>] \
      --summary "<one-line summary>" --tags a,b --source <agent-name> \
      [--temp]   # temp mode only; custom duration: --temp 30m / --temp 1d
@@ -55,6 +56,8 @@ press Keep to retain one. When unsure, publish as keep — deleting is easy.
   - `info` — reference info, curiosities the user asked about
   - `fun` — entertainment, toys
 - `--summary`: shown as two lines on the list card. What it is + what the user should do.
+- `--view`: omit it for responsive documents (the default). Use `presentation`
+  only for fixed-aspect, screen-by-screen artifacts such as slide decks.
 - `--project`: related project slug; omit for general topics.
 - `--folder`: optional path inside the project. Use it only when the destination is
   already clear from context; otherwise leave the item for the user's Unfiled queue.
@@ -69,6 +72,9 @@ press Keep to retain one. When unsure, publish as keep — deleting is easy.
 
 - **Self-contained single file**: no external CDN/font/image requests. Inline CSS/JS;
   images as data URIs or inline SVG. 5MB limit.
+
+### Document view (default)
+
 - **Mobile-first, but not mobile-only**: design against a 390px base with
   `<meta name="viewport" content="width=device-width, initial-scale=1">`, but never hardcode
   a single flat `max-width` (e.g. `720px`) on the whole page — on a wide monitor that leaves
@@ -84,8 +90,25 @@ press Keep to retain one. When unsure, publish as keep — deleting is easy.
 - **Light/dark**: `:root { color-scheme: light dark }` + `prefers-color-scheme` styles for both.
 - **Wide content**: tables/code blocks/diagrams inside `overflow-x: auto` containers;
   the page itself must never scroll horizontally.
-- **Dynamic pages allowed**: inline JS works, but the page runs in a sandboxed iframe —
-  no cookies/localStorage/parent access; don't fetch external resources.
+
+### Presentation view
+
+- Pass `--view presentation`.
+- Fixed aspect ratios such as 16:9 and desktop/tablet-first layouts are allowed.
+- Provide visible previous/next controls as well as keyboard navigation. Touch swipe
+  is recommended.
+- Fit the stage to the available viewport and target a useful layout at 1024px or
+  wider. The board warns smaller screens before opening.
+- A single dark or light presentation theme is allowed when it is a deliberate part
+  of the deck design; maintain accessible contrast.
+- Fullscreen via `requestFullscreen()` is supported after a user gesture. Also make
+  the deck usable in a standalone tab with its own hash routing.
+
+### Sandbox contract
+
+- Inline JS works, but the page runs in a sandboxed iframe: no cookies,
+  localStorage, parent access, forms, popups, or external network requests.
+- Fullscreen is delegated, but do not require any other browser permission.
 
 ## Verify
 

@@ -26,6 +26,17 @@ test("prints help successfully without a command", () => {
   assert.match(result.stdout, /--folder A\/B/);
   assert.match(result.stdout, /dropboard update/);
   assert.match(result.stdout, /--key stable\/key/);
+  assert.match(result.stdout, /--view document\|presentation/);
+});
+
+test("rejects an invalid view mode before publishing", () => {
+  const result = spawnSync(
+    process.execPath,
+    [cli, "publish", artifactPath, "--view", "canvas"],
+    { encoding: "utf8" },
+  );
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /view must be one of/);
 });
 
 test("rejects an invalid artifact type before publishing", () => {

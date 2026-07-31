@@ -6,6 +6,9 @@ export type ItemStatus = (typeof ITEM_STATUSES)[number];
 
 export type ContentType = "html" | "markdown";
 
+export const ITEM_VIEW_MODES = ["document", "presentation"] as const;
+export type ItemViewMode = (typeof ITEM_VIEW_MODES)[number];
+
 export interface ItemMeta {
   id: string;
   title: string;
@@ -20,6 +23,8 @@ export interface ItemMeta {
   summary: string;
   content_file: string;
   content_type: ContentType;
+  /** Rendering expectations for the viewer. Legacy items default to document. */
+  view_mode: ItemViewMode;
   status: ItemStatus;
   pinned: boolean;
   read_at: string | null;
@@ -45,6 +50,7 @@ export interface CreateItemInput {
   summary?: string;
   content: string;
   content_type?: ContentType;
+  view_mode?: ItemViewMode;
   source?: string;
   /** set → temp item expiring after this many minutes */
   ttl_minutes?: number;
@@ -57,6 +63,7 @@ export interface RevisionMeta {
   summary: string;
   content_file: string;
   content_type: ContentType;
+  view_mode: ItemViewMode;
   created_at: string;
   source: string;
   note: string | null;
@@ -65,6 +72,7 @@ export interface RevisionMeta {
 export interface CreateRevisionInput {
   content: string;
   content_type: ContentType;
+  view_mode?: ItemViewMode;
   title?: string;
   type?: ItemType;
   summary?: string;

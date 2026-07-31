@@ -6,6 +6,23 @@ Notable changes to dropboard are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Presentation-format artifacts can declare `view_mode: "presentation"` through
+  the REST API or `--view presentation` in the CLI. Cards badge the format,
+  smaller screens receive a ≥1024px notice, and the value follows immutable
+  revisions and restores.
+- Private and public artifact viewers now delegate fullscreen permission and
+  offer a direct new-tab view without loosening the existing sandbox or CSP.
+
+### Changed
+
+- The archived collection is now presented as the **Library**, matching its
+  existing project, nested-folder, search, and revision workflows. Internal
+  `archived` status values and `/archive` URLs remain compatible.
+- Project messaging now leads with dropboard as an open-source inbox and library
+  for AI-generated deliverables.
+
 ### Fixed
 
 - Runtime storage paths no longer make production file tracing copy project

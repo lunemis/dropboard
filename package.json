@@ -33,7 +33,7 @@
     "tsx": "^4.23.1",
     "typescript": "^5"
   },
-  "description": "Self-hosted review board for AI-generated deliverables",
+  "description": "Open-source inbox and library for AI-generated deliverables",
   "keywords": [
     "ai-agents",
     "self-hosted",

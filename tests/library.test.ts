@@ -25,6 +25,7 @@ function item(
     summary: "",
     content_file: "index.html",
     content_type: "html",
+    view_mode: "document",
     status: "archived",
     pinned: false,
     read_at: null,

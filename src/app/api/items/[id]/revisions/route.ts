@@ -9,8 +9,10 @@ import {
 } from "../../../../../lib/store";
 import {
   ITEM_TYPES,
+  ITEM_VIEW_MODES,
   type ContentType,
   type ItemType,
+  type ItemViewMode,
 } from "../../../../../lib/types";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -57,6 +59,7 @@ export async function POST(request: Request, ctx: Ctx) {
   const body = parsed.value;
   const content = typeof body.content === "string" ? body.content : "";
   const contentType = body.content_type as ContentType;
+  const viewMode = body.view_mode as ItemViewMode | undefined;
   if (!content) {
     return NextResponse.json({ error: "content is required" }, { status: 400 });
   }
@@ -69,6 +72,12 @@ export async function POST(request: Request, ctx: Ctx) {
   if (contentType !== "html" && contentType !== "markdown") {
     return NextResponse.json(
       { error: "content_type must be html or markdown" },
+      { status: 400 },
+    );
+  }
+  if (viewMode !== undefined && !ITEM_VIEW_MODES.includes(viewMode)) {
+    return NextResponse.json(
+      { error: `view_mode must be one of: ${ITEM_VIEW_MODES.join(", ")}` },
       { status: 400 },
     );
   }
@@ -132,6 +141,7 @@ export async function POST(request: Request, ctx: Ctx) {
     const item = await addRevision(id, {
       content,
       content_type: contentType,
+      view_mode: viewMode,
       title: typeof body.title === "string" ? body.title.trim() : undefined,
       type: body.type as ItemType | undefined,
       summary: typeof body.summary === "string" ? body.summary : undefined,
