@@ -2,7 +2,9 @@ import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 
 const root = process.cwd();
-const buildDir = path.join(root, ".next");
+const buildDirName = process.env.DROPBOARD_NEXT_DIST_DIR ?? ".next";
+const buildDir = path.join(root, buildDirName);
+const buildDirRelative = path.relative(root, buildDir);
 
 async function findTraceFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -45,7 +47,8 @@ for (const traceFile of traceFiles) {
       !relative.startsWith(`..${path.sep}`) &&
       !path.isAbsolute(relative);
     const isBuildInput =
-      relative.startsWith(`.next${path.sep}`) ||
+      (relative === buildDirRelative ||
+        relative.startsWith(`${buildDirRelative}${path.sep}`)) ||
       relative.startsWith(`node_modules${path.sep}`);
 
     if (isProjectFile && !isBuildInput) {
