@@ -63,6 +63,49 @@ test("normalizes legacy items without a view mode", async () => {
   assert.equal((await store.getItem(item.id))?.view_mode, "document");
 });
 
+test("creates durable items directly in the library", async () => {
+  const item = await store.createItem({
+    title: "Reference book",
+    type: "info",
+    content: "chapters",
+    destination: "library",
+  });
+  assert.equal(item.status, "library");
+  assert.ok(item.read_at);
+  assert.deepEqual(
+    (await store.listItems({ status: "library" })).map((entry) => entry.id),
+    [item.id],
+  );
+  await assert.rejects(
+    store.createItem({
+      title: "Temporary book",
+      type: "info",
+      content: "temporary",
+      destination: "library",
+      ttl_minutes: 30,
+    }),
+    /cannot be temporary/,
+  );
+});
+
+test("moving a temporary item to the library makes it durable", async () => {
+  const item = await store.createItem({
+    title: "Temporary reference",
+    type: "info",
+    content: "reference",
+    ttl_minutes: 30,
+  });
+  assert.ok(item.expires_at);
+  const moved = await store.updateItem(item.id, { status: "library" });
+  assert.equal(moved?.status, "library");
+  assert.equal(moved?.expires_at, null);
+
+  const temporaryAgain = await store.updateItem(item.id, { ttl_minutes: 15 });
+  assert.equal(temporaryAgain?.status, "inbox");
+  assert.equal(temporaryAgain?.read_at, null);
+  assert.ok(temporaryAgain?.expires_at);
+});
+
 test("zero trash TTL preserves trash while expired temp items are swept", async () => {
   const trash = await store.createItem({
     title: "Old trash",

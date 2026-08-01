@@ -77,6 +77,43 @@ test("revision API rejects an invalid view mode", async () => {
   assert.match((await response.json()).error, /view_mode/);
 });
 
+test("revision API can send an update directly to the library", async () => {
+  const item = await store.createItem({
+    title: "Reference update",
+    type: "info",
+    content: "v1",
+  });
+  const response = await POST(
+    new Request(`http://localhost/api/items/${item.id}/revisions`, {
+      method: "POST",
+      body: JSON.stringify({
+        content: "v2",
+        content_type: "html",
+        destination: "library",
+      }),
+    }),
+    { params: Promise.resolve({ id: item.id }) },
+  );
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).item.status, "library");
+});
+
+test("revision API rejects an invalid destination", async () => {
+  const response = await POST(
+    new Request(`http://localhost/api/items/${itemId}/revisions`, {
+      method: "POST",
+      body: JSON.stringify({
+        content: "invalid destination",
+        content_type: "html",
+        destination: "archive",
+      }),
+    }),
+    { params: Promise.resolve({ id: itemId }) },
+  );
+  assert.equal(response.status, 400);
+  assert.match((await response.json()).error, /destination/);
+});
+
 test("revision API returns a conflict for a stale expected version", async () => {
   const response = await POST(
     new Request(`http://localhost/api/items/${itemId}/revisions`, {

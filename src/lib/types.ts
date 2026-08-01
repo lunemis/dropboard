@@ -1,12 +1,15 @@
 export const ITEM_TYPES = ["review", "decision", "report", "info", "fun"] as const;
 export type ItemType = (typeof ITEM_TYPES)[number];
 
-export const ITEM_STATUSES = ["inbox", "archived", "trash"] as const;
+export const ITEM_STATUSES = ["inbox", "archived", "library", "trash"] as const;
 export type ItemStatus = (typeof ITEM_STATUSES)[number];
+
+export const ITEM_DESTINATIONS = ["inbox", "library"] as const;
+export type ItemDestination = (typeof ITEM_DESTINATIONS)[number];
 
 export type ContentType = "html" | "markdown";
 
-export const ITEM_VIEW_MODES = ["document", "presentation"] as const;
+export const ITEM_VIEW_MODES = ["document", "presentation", "reader"] as const;
 export type ItemViewMode = (typeof ITEM_VIEW_MODES)[number];
 
 export interface ItemMeta {
@@ -51,6 +54,8 @@ export interface CreateItemInput {
   content: string;
   content_type?: ContentType;
   view_mode?: ItemViewMode;
+  /** Initial location or post-update destination. Defaults to inbox. */
+  destination?: ItemDestination;
   source?: string;
   /** set → temp item expiring after this many minutes */
   ttl_minutes?: number;
@@ -73,6 +78,8 @@ export interface CreateRevisionInput {
   content: string;
   content_type: ContentType;
   view_mode?: ItemViewMode;
+  /** Where the updated item should appear. Defaults to inbox. */
+  destination?: ItemDestination;
   title?: string;
   type?: ItemType;
   summary?: string;

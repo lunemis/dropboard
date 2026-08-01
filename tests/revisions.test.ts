@@ -52,6 +52,21 @@ test("adds immutable revisions and brings an archived document back unread", asy
   assert.equal((await store.listRevisions(created.id))?.length, 2);
 });
 
+test("can update a stable item directly in the library", async () => {
+  const created = await store.createItem({
+    title: "Handbook",
+    type: "info",
+    content: "v1",
+  });
+  const updated = await store.addRevision(created.id, {
+    content: "v2",
+    content_type: "html",
+    destination: "library",
+  });
+  assert.equal(updated?.status, "library");
+  assert.ok(updated?.read_at);
+});
+
 test("restoring an old version creates a new revision without deleting history", async () => {
   const created = await store.createItem({
     title: "Spec",

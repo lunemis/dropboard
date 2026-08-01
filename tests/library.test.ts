@@ -26,7 +26,7 @@ function item(
     content_file: "index.html",
     content_type: "html",
     view_mode: "document",
-    status: "archived",
+    status: "library",
     pinned: false,
     read_at: null,
     trashed_at: null,

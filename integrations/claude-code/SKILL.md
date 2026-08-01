@@ -7,7 +7,8 @@ description: Publish AI deliverables (documents, analyses, reports, presentation
 
 dropboard is the user's personal inbox and library for AI deliverables. Publish
 conversation deliverables as self-contained web pages; the user reviews them in
-the inbox and archives useful work into the library.
+the inbox, archives completed work as history, and keeps durable reference
+material in the library.
 
 ## Pick the mode first
 
@@ -18,6 +19,7 @@ Infer **retention** and **polish level** from the user's phrasing:
 | "show me this as HTML", "let me see it in the browser" | **temp**: add `--temp` (auto-deletes in 2h). Minimal styling — just make the content readable |
 | "put this on the board", "publish for review" | **keep**: review-optimized page, type review/decision |
 | "write this up as a document" | **keep + formal doc**: structured (sections/tables), type report/info |
+| "make a book/manual/reference I can keep" | **library + reader**: add `--to library --view reader` when no review remains; otherwise publish the draft to the inbox |
 
 Temp items appear in a "Temporary" group at the top of the inbox; the user can
 press Keep to retain one. When unsure, publish as keep — deleting is easy.
@@ -31,7 +33,7 @@ press Keep to retain one. When unsure, publish as keep — deleting is easy.
 2. **Publish**:
    ```bash
    dropboard publish <file> --type <type> --project <project-slug> \
-     [--view <document|presentation>] \
+     [--view <document|presentation|reader>] [--to <inbox|library>] \
      [--folder <parent/child>] \
      --summary "<one-line summary>" --tags a,b --source <agent-name> \
      [--temp]   # temp mode only; custom duration: --temp 30m / --temp 1d
@@ -57,7 +59,12 @@ press Keep to retain one. When unsure, publish as keep — deleting is easy.
   - `fun` — entertainment, toys
 - `--summary`: shown as two lines on the list card. What it is + what the user should do.
 - `--view`: omit it for responsive documents (the default). Use `presentation`
-  only for fixed-aspect, screen-by-screen artifacts such as slide decks.
+  only for fixed-aspect, screen-by-screen artifacts such as slide decks. Use
+  `reader` for books, manuals, and other long-form references organized for
+  sustained reading rather than quick review.
+- `--to`: omit it to send work to the inbox for review. Use `library` only when
+  the artifact is already a finished, durable reference. Draft books still go
+  to the inbox. `--temp` cannot be combined with `--to library`.
 - `--project`: related project slug; omit for general topics.
 - `--folder`: optional path inside the project. Use it only when the destination is
   already clear from context; otherwise leave the item for the user's Unfiled queue.
@@ -104,6 +111,15 @@ press Keep to retain one. When unsure, publish as keep — deleting is easy.
 - Fullscreen via `requestFullscreen()` is supported after a user gesture. Also make
   the deck usable in a standalone tab with its own hash routing.
 
+### Reader view
+
+- Pass `--view reader`; use `--to library` only if the material is already final.
+- Give long material a clear title page, chapter hierarchy, and table of contents.
+- Keep prose at a readable line length while letting figures, code, and tables use
+  the available width. Preserve the document-view mobile and overflow rules.
+- For very large artifacts, provide in-page search or filtering and visible reading
+  position/progress when practical. Keep all navigation functional inside the file.
+
 ### Sandbox contract
 
 - Inline JS works, but the page runs in a sandboxed iframe: no cookies,
@@ -112,4 +128,5 @@ press Keep to retain one. When unsure, publish as keep — deleting is easy.
 
 ## Verify
 
-`dropboard list` shows the inbox to confirm the item landed.
+Use `dropboard list` for inbox destinations and `dropboard list --status library`
+for direct library destinations to confirm the item landed.

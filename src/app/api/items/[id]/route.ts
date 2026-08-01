@@ -92,6 +92,16 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
       { status: 400 },
     );
   }
+  if (
+    ttl !== undefined &&
+    body.status !== undefined &&
+    body.status !== "inbox"
+  ) {
+    return NextResponse.json(
+      { error: "temporary items must stay in the inbox" },
+      { status: 400 },
+    );
+  }
 
   if (
     body.project !== undefined &&

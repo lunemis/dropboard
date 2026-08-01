@@ -288,6 +288,9 @@ function makeId(date: Date): string {
 }
 
 export async function createItem(input: CreateItemInput): Promise<ItemMeta> {
+  if (input.destination === "library" && input.ttl_minutes) {
+    throw new Error("library items cannot be temporary");
+  }
   const contentType = input.content_type ?? "html";
   const contentFile = contentType === "markdown" ? "index.md" : "index.html";
 
@@ -305,6 +308,7 @@ export async function createItem(input: CreateItemInput): Promise<ItemMeta> {
   }
 
   const ts = now();
+  const destination = input.destination ?? "inbox";
   const meta: ItemMeta = {
     id,
     title: input.title,
@@ -318,9 +322,9 @@ export async function createItem(input: CreateItemInput): Promise<ItemMeta> {
     content_file: contentFile,
     content_type: contentType,
     view_mode: input.view_mode ?? "document",
-    status: "inbox",
+    status: destination,
     pinned: false,
-    read_at: null,
+    read_at: destination === "library" ? ts : null,
     trashed_at: null,
     expires_at: input.ttl_minutes
       ? new Date(Date.now() + input.ttl_minutes * 60000).toISOString()
@@ -372,6 +376,7 @@ export async function updateItem(
     if (patch.status && patch.status !== meta.status) {
       meta.status = patch.status;
       meta.trashed_at = patch.status === "trash" ? now() : null;
+      if (patch.status !== "inbox") meta.expires_at = null;
     }
     if (typeof patch.pinned === "boolean") meta.pinned = patch.pinned;
     if (patch.project !== undefined) meta.project = patch.project;
@@ -381,6 +386,9 @@ export async function updateItem(
     if (patch.read === false) meta.read_at = null;
     if (patch.keep === true) meta.expires_at = null;
     if (patch.ttl_minutes) {
+      meta.status = "inbox";
+      meta.read_at = null;
+      meta.trashed_at = null;
       meta.expires_at = new Date(
         Date.now() + patch.ttl_minutes * 60000,
       ).toISOString();
@@ -396,7 +404,7 @@ export type BulkOrganizationResult =
   | { ok: true; items: ItemMeta[] }
   | {
       ok: false;
-      reason: "not_found" | "not_archived";
+      reason: "not_found" | "not_library";
       itemIds: string[];
     };
 
@@ -421,14 +429,14 @@ export async function organizeItems(
       return { ok: false, reason: "not_found", itemIds: missing };
     }
 
-    const notArchived = originals
-      .filter((item) => item.status !== "archived")
+    const notLibrary = originals
+      .filter((item) => item.status !== "library")
       .map((item) => item.id);
-    if (notArchived.length > 0) {
+    if (notLibrary.length > 0) {
       return {
         ok: false,
-        reason: "not_archived",
-        itemIds: notArchived,
+        reason: "not_library",
+        itemIds: notLibrary,
       };
     }
 
@@ -592,8 +600,8 @@ export async function addRevision(
     item.content_type = revisionMeta.content_type;
     item.view_mode = revisionMeta.view_mode;
     item.source = revisionMeta.source;
-    item.status = "inbox";
-    item.read_at = null;
+    item.status = input.destination ?? "inbox";
+    item.read_at = item.status === "library" ? timestamp : null;
     item.trashed_at = null;
     item.expires_at = null;
     item.share_epoch = (item.share_epoch ?? 0) + 1;
@@ -700,6 +708,7 @@ export async function createOrUpdateItem(
       content: input.content,
       content_type: input.content_type ?? "html",
       view_mode: input.view_mode,
+      destination: input.destination,
       summary: input.summary,
       source: input.source,
       note: input.revision_note,

@@ -23,6 +23,7 @@ import { OrganizerDialog, type OrganizationValues } from "./OrganizerDialog";
 const TABS: { href: string; label: string; status: ItemStatus }[] = [
   { href: "/", label: t.inbox, status: "inbox" },
   { href: "/archive", label: t.archive, status: "archived" },
+  { href: "/library", label: t.library, status: "library" },
   { href: "/trash", label: t.trash, status: "trash" },
 ];
 
@@ -289,7 +290,7 @@ export default function Board({ status }: { status: ItemStatus }) {
     items?.filter(
       (i) =>
         (typeFilter === "all" || i.type === typeFilter) &&
-        (status !== "archived" ||
+        (status !== "library" ||
           matchesLibrarySelection(i, librarySelection)) &&
         matchesQuery(i, query) &&
         (!i.expires_at || new Date(i.expires_at).getTime() > now),
@@ -411,7 +412,7 @@ export default function Board({ status }: { status: ItemStatus }) {
         </div>
       </header>
 
-      {status === "archived" && items !== null && items.length > 0 && (
+      {status === "library" && items !== null && items.length > 0 && (
         <LibraryNavigator
           index={libraryIndex}
           total={items.length}
@@ -517,7 +518,7 @@ export default function Board({ status }: { status: ItemStatus }) {
           </div>
         </div>
       )}
-      {status === "archived" && selecting && (
+      {status === "library" && selecting && (
         <div className="fixed inset-x-0 bottom-5 z-20 flex justify-center px-3">
           <div className="flex w-full max-w-lg items-center gap-2 rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-2 shadow-[var(--shadow-md)]">
             <span className="min-w-0 flex-1 px-2 text-sm font-semibold">
@@ -647,7 +648,11 @@ function EmptyState({
   return (
     <div className="empty-panel my-4 rounded-2xl border border-dashed border-[var(--line-strong)] py-20 text-center">
       <p className="text-sm text-[var(--muted)]">
-        {status === "archived" ? t.emptyArchive : t.emptyTrash}
+        {status === "archived"
+          ? t.emptyArchive
+          : status === "library"
+            ? t.emptyLibrary
+            : t.emptyTrash}
       </p>
       {status === "trash" && (
         <p className="mt-1 text-xs text-[var(--muted)]">{t.trashNote(30)}</p>

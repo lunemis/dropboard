@@ -52,7 +52,7 @@ export function ArtifactCard({
               : "border-[var(--line)]"
         }`}
       >
-        {status === "archived" && selecting && (
+        {status === "library" && selecting && (
           <label className="flex shrink-0 items-center px-1">
             <input
               type="checkbox"
@@ -123,6 +123,11 @@ export function ArtifactCard({
                   {t.presentation}
                 </span>
               )}
+              {item.view_mode === "reader" && (
+                <span className="metadata-chip border-[color-mix(in_srgb,var(--accent)_24%,transparent)] bg-[var(--accent-soft)] font-semibold text-[var(--accent)]">
+                  {t.reader}
+                </span>
+              )}
               {item.tags.slice(0, 3).map((tag) => (
                 <span key={tag} className="text-[var(--muted-soft)]">
                   #{tag}
@@ -155,6 +160,12 @@ export function ArtifactCard({
                 <ArchiveIcon />
               </IconBtn>
               <IconBtn
+                label={t.actionToLibrary}
+                onClick={() => onMove("library", t.toastToLibrary)}
+              >
+                <KeepIcon />
+              </IconBtn>
+              <IconBtn
                 label={t.actionToTrash}
                 onClick={() => onMove("trash", t.toastTrashed)}
               >
@@ -163,14 +174,35 @@ export function ArtifactCard({
             </>
           ) : state.actionMode === "archived" ? (
             <>
-              <IconBtn label={t.organize} onClick={onOrganize}>
-                <FolderIcon />
+              <IconBtn
+                label={t.actionToLibrary}
+                onClick={() => onMove("library", t.toastToLibrary)}
+              >
+                <KeepIcon />
               </IconBtn>
               <IconBtn
                 label={t.actionToInbox}
                 onClick={() => onMove("inbox", t.toastToInbox)}
               >
                 <RestoreIcon />
+              </IconBtn>
+              <IconBtn
+                label={t.actionToTrash}
+                onClick={() => onMove("trash", t.toastTrashed)}
+              >
+                <TrashIcon />
+              </IconBtn>
+            </>
+          ) : state.actionMode === "library" ? (
+            <>
+              <IconBtn label={t.organize} onClick={onOrganize}>
+                <FolderIcon />
+              </IconBtn>
+              <IconBtn
+                label={t.actionArchive}
+                onClick={() => onMove("archived", t.toastArchived)}
+              >
+                <ArchiveIcon />
               </IconBtn>
               <IconBtn
                 label={t.actionToTrash}

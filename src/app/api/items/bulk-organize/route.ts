@@ -89,7 +89,7 @@ export async function PATCH(req: NextRequest) {
         error:
           result.reason === "not_found"
             ? "one or more items were not found"
-            : "all items must still be archived",
+            : "all items must still be in the library",
         item_ids: result.itemIds,
       },
       { status: result.reason === "not_found" ? 404 : 409 },

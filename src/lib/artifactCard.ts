@@ -1,7 +1,7 @@
 import type { ItemMeta, ItemStatus } from "./types";
 
 export type ArtifactCardActionMode =
-  "temporary" | "inbox" | "archived" | "trash";
+  "temporary" | "inbox" | "archived" | "library" | "trash";
 
 export function artifactCardState(item: ItemMeta, status: ItemStatus) {
   return {

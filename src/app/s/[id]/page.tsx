@@ -50,6 +50,11 @@ export default async function SharePage({ params, searchParams }: Props) {
             {t.presentation}
           </span>
         )}
+        {item.view_mode === "reader" && (
+          <span className="rounded-full bg-[var(--accent-soft)] px-2 py-1 font-mono text-[9px] font-semibold tracking-wide text-[var(--accent)] uppercase">
+            {t.reader}
+          </span>
+        )}
         <a
           href={rawUrl}
           target="_blank"

@@ -77,6 +77,40 @@ test("publish API rejects an invalid view mode", async () => {
   assert.match((await response.json()).error, /view_mode/);
 });
 
+test("publish API can route durable items directly to the library", async () => {
+  const response = await POST(
+    publishRequest(true, {
+      title: "Reference book",
+      destination: "library",
+      view_mode: "reader",
+    }),
+  );
+  assert.equal(response.status, 201);
+  const body = await response.json();
+  assert.equal(body.item.status, "library");
+  assert.equal(body.item.view_mode, "reader");
+  assert.ok(body.item.read_at);
+
+  const listed = await GET(
+    new NextRequest("http://localhost/api/items?status=library"),
+  );
+  assert.equal((await listed.json()).items[0].id, body.item.id);
+});
+
+test("publish API validates library destinations", async () => {
+  const invalid = await POST(
+    publishRequest(true, { destination: "archive" }),
+  );
+  assert.equal(invalid.status, 400);
+  assert.match((await invalid.json()).error, /destination/);
+
+  const temporary = await POST(
+    publishRequest(true, { destination: "library", ttl_minutes: 30 }),
+  );
+  assert.equal(temporary.status, 400);
+  assert.match((await temporary.json()).error, /ttl_minutes/);
+});
+
 test("list API returns bounded pagination metadata", async () => {
   await POST(publishRequest(true, { title: "Second" }));
   await POST(publishRequest(true, { title: "Third" }));

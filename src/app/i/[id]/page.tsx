@@ -33,6 +33,7 @@ import { useStoredChoice } from "../../../lib/useStoredChoice";
 const LIST_PATH: Record<ItemStatus, string> = {
   inbox: "/",
   archived: "/archive",
+  library: "/library",
   trash: "/trash",
 };
 
@@ -297,6 +298,11 @@ export default function ViewerPage() {
             {t.presentation}
           </span>
         )}
+        {displayedViewMode === "reader" && (
+          <span className="hidden rounded-full bg-[var(--accent-soft)] px-2 py-1 font-mono text-[9px] font-semibold tracking-wide text-[var(--accent)] uppercase sm:inline">
+            {t.reader}
+          </span>
+        )}
         {displayedContentType === "markdown" && (
           <div
             className="hidden items-center gap-1 sm:flex"
@@ -423,6 +429,15 @@ export default function ViewerPage() {
                 className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--muted)] active:bg-[var(--surface-2)]"
               >
                 <ArchiveIcon />
+              </button>
+            )}
+            {meta.status !== "library" && meta.status !== "trash" && (
+              <button
+                aria-label={t.actionToLibrary}
+                onClick={() => moveTo("library")}
+                className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--muted)] active:bg-[var(--surface-2)]"
+              >
+                <KeepIcon />
               </button>
             )}
             {meta.status !== "inbox" && (
