@@ -8,9 +8,11 @@ import {
   TrashedDocumentError,
 } from "../../../../../lib/store";
 import {
+  ITEM_DESTINATIONS,
   ITEM_TYPES,
   ITEM_VIEW_MODES,
   type ContentType,
+  type ItemDestination,
   type ItemType,
   type ItemViewMode,
 } from "../../../../../lib/types";
@@ -60,6 +62,7 @@ export async function POST(request: Request, ctx: Ctx) {
   const content = typeof body.content === "string" ? body.content : "";
   const contentType = body.content_type as ContentType;
   const viewMode = body.view_mode as ItemViewMode | undefined;
+  const destination = body.destination as ItemDestination | undefined;
   if (!content) {
     return NextResponse.json({ error: "content is required" }, { status: 400 });
   }
@@ -78,6 +81,15 @@ export async function POST(request: Request, ctx: Ctx) {
   if (viewMode !== undefined && !ITEM_VIEW_MODES.includes(viewMode)) {
     return NextResponse.json(
       { error: `view_mode must be one of: ${ITEM_VIEW_MODES.join(", ")}` },
+      { status: 400 },
+    );
+  }
+  if (
+    destination !== undefined &&
+    !ITEM_DESTINATIONS.includes(destination)
+  ) {
+    return NextResponse.json(
+      { error: `destination must be one of: ${ITEM_DESTINATIONS.join(", ")}` },
       { status: 400 },
     );
   }
@@ -142,6 +154,7 @@ export async function POST(request: Request, ctx: Ctx) {
       content,
       content_type: contentType,
       view_mode: viewMode,
+      destination,
       title: typeof body.title === "string" ? body.title.trim() : undefined,
       type: body.type as ItemType | undefined,
       summary: typeof body.summary === "string" ? body.summary : undefined,

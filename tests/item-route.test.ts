@@ -41,6 +41,15 @@ test("rejects invalid and conflicting patch fields", async () => {
     (await PATCH(patchRequest({ keep: true, ttl_minutes: 10 }), ctx)).status,
     400,
   );
+  assert.equal(
+    (
+      await PATCH(
+        patchRequest({ status: "library", ttl_minutes: 10 }),
+        ctx,
+      )
+    ).status,
+    400,
+  );
   assert.equal((await PATCH(patchRequest({ surprise: true }), ctx)).status, 400);
 });
 

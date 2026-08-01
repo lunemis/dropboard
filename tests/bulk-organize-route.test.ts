@@ -28,18 +28,18 @@ function request(body: Record<string, unknown>) {
   });
 }
 
-async function archivedItem(title: string) {
+async function libraryItem(title: string) {
   const item = await store.createItem({
     title,
     type: "info",
     content: title,
   });
-  return (await store.updateItem(item.id, { status: "archived" }))!;
+  return (await store.updateItem(item.id, { status: "library" }))!;
 }
 
-test("organizes archived items together while preserving tags", async () => {
-  const first = await archivedItem("First");
-  const second = await archivedItem("Second");
+test("organizes library items together while preserving tags", async () => {
+  const first = await libraryItem("First");
+  const second = await libraryItem("Second");
   await store.updateItem(first.id, { tags: ["keep-me"] });
 
   const response = await PATCH(
@@ -66,7 +66,7 @@ test("organizes archived items together while preserving tags", async () => {
 });
 
 test("validates every target before changing any item", async () => {
-  const archived = await archivedItem("Stay put");
+  const library = await libraryItem("Stay put");
   const inbox = await store.createItem({
     title: "Inbox",
     type: "info",
@@ -75,34 +75,34 @@ test("validates every target before changing any item", async () => {
 
   const response = await PATCH(
     request({
-      item_ids: [archived.id, inbox.id],
+      item_ids: [library.id, inbox.id],
       project: "Must not apply",
       folder: "",
     }),
   );
   assert.equal(response.status, 409);
   assert.deepEqual((await response.json()).item_ids, [inbox.id]);
-  assert.equal((await store.getItem(archived.id))?.project, null);
+  assert.equal((await store.getItem(library.id))?.project, null);
 });
 
 test("rejects missing targets and invalid organization fields", async () => {
-  const archived = await archivedItem("Validation");
+  const library = await libraryItem("Validation");
   const missingId = "20260721-120000-none";
   const missing = await PATCH(
     request({
-      item_ids: [archived.id, missingId],
+      item_ids: [library.id, missingId],
       project: "Must not apply",
       folder: "",
     }),
   );
   assert.equal(missing.status, 404);
-  assert.equal((await store.getItem(archived.id))?.project, null);
+  assert.equal((await store.getItem(library.id))?.project, null);
 
   assert.equal(
     (
       await PATCH(
         request({
-          item_ids: [archived.id],
+          item_ids: [library.id],
           project: "Dropboard",
           folder: "Research/../Secret",
         }),

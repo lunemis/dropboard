@@ -4,15 +4,17 @@
  *
  * Usage:
  *   dropboard publish <file> [--title T] [--type review|decision|report|info|fun]
- *                         [--view document|presentation]
+ *                         [--view document|presentation|reader]
+ *                         [--to inbox|library]
  *                         [--project P] [--folder A/B] [--summary S]
  *                         [--tags a,b] [--source S]
  *                         [--key stable/key] [--note change-summary]
  *                         [--server URL]
  *   dropboard update <item-id> <file> [--title T] [--type T] [--summary S]
- *                         [--view document|presentation]
+ *                         [--view document|presentation|reader]
+ *                         [--to inbox|library]
  *                         [--note change-summary] [--expected N]
- *   dropboard list [--status inbox|archived|trash]
+ *   dropboard list [--status inbox|archived|library|trash]
  *
  * Config: ~/.config/dropboard/config.json  { "url": "...", "token": "..." }
  * Env overrides: DROPBOARD_URL, DROPBOARD_TOKEN
@@ -24,7 +26,9 @@ import os from "node:os";
 
 const CONFIG_PATH = path.join(os.homedir(), ".config", "dropboard", "config.json");
 const TYPES = ["review", "decision", "report", "info", "fun"];
-const VIEW_MODES = ["document", "presentation"];
+const VIEW_MODES = ["document", "presentation", "reader"];
+const DESTINATIONS = ["inbox", "library"];
+const STATUSES = ["inbox", "archived", "library", "trash"];
 
 function loadConfig() {
   try {
@@ -94,6 +98,12 @@ async function publish(argv) {
   if (flags.view && !VIEW_MODES.includes(flags.view)) {
     die(`view must be one of: ${VIEW_MODES.join(", ")}`);
   }
+  if (flags.to && !DESTINATIONS.includes(flags.to)) {
+    die(`to must be one of: ${DESTINATIONS.join(", ")}`);
+  }
+  if (flags.to === "library" && "temp" in flags) {
+    die("--to library cannot be combined with --temp");
+  }
 
   const cfg = loadConfig();
   const url = serverUrl(flags, cfg);
@@ -112,6 +122,7 @@ async function publish(argv) {
   };
   if (flags.type || !flags.key) body.type = type;
   if (flags.view) body.view_mode = flags.view;
+  if (flags.to) body.destination = flags.to;
   if (flags.project) body.project = flags.project;
   if (flags.folder) body.folder = flags.folder;
   if (flags.key) body.document_key = flags.key;
@@ -166,6 +177,9 @@ async function update(argv) {
   if (flags.view && !VIEW_MODES.includes(flags.view)) {
     die(`view must be one of: ${VIEW_MODES.join(", ")}`);
   }
+  if (flags.to && !DESTINATIONS.includes(flags.to)) {
+    die(`to must be one of: ${DESTINATIONS.join(", ")}`);
+  }
   let content;
   try {
     content = await readFile(file, "utf8");
@@ -181,6 +195,7 @@ async function update(argv) {
   if (flags.title) body.title = flags.title;
   if (flags.type) body.type = flags.type;
   if (flags.view) body.view_mode = flags.view;
+  if (flags.to) body.destination = flags.to;
   if (flags.summary) body.summary = flags.summary;
   if (flags.note) body.revision_note = flags.note;
   if (flags.expected) {
@@ -217,6 +232,9 @@ async function list(argv) {
   const url = serverUrl(flags, cfg);
   const token = process.env.DROPBOARD_TOKEN || cfg.token;
   const status = flags.status || "inbox";
+  if (!STATUSES.includes(status)) {
+    die(`status must be one of: ${STATUSES.join(", ")}`);
+  }
 
   let res;
   try {
@@ -250,14 +268,16 @@ else {
 commands:
   dropboard publish <file> [--title T] [--type ${TYPES.join("|")}]
                         [--view ${VIEW_MODES.join("|")}]
+                        [--to ${DESTINATIONS.join("|")}]
                         [--temp [30m|2h|1d]]   # ephemeral: auto-deletes (default 2h)
                         [--project P] [--folder A/B] [--summary S]
                         [--tags a,b] [--server URL]
                         [--key stable/key] [--note change-summary]
   dropboard update <item-id> <file> [--title T] [--type T] [--summary S]
                         [--view ${VIEW_MODES.join("|")}]
+                        [--to ${DESTINATIONS.join("|")}]
                         [--note change-summary] [--expected N]
-  dropboard list [--status inbox|archived|trash]
+  dropboard list [--status ${STATUSES.join("|")}]
 
 .md/.markdown files are published as markdown, everything else as html.
 config: ${CONFIG_PATH}  { "url": "http://localhost:3000", "token": "..." }`);

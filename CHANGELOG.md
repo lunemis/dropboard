@@ -8,6 +8,12 @@ Notable changes to dropboard are documented here. The format follows
 
 ### Added
 
+- Books, manuals, and other long-form references can declare
+  `view_mode: "reader"` through the REST API or `--view reader` in the CLI,
+  with a distinct Book badge in private and public viewers.
+- Publishing and revision APIs now accept `destination: "inbox" | "library"`;
+  the CLI exposes the same choice through `--to`. Finished references can land
+  directly in Library while review work continues to default to Inbox.
 - Presentation-format artifacts can declare `view_mode: "presentation"` through
   the REST API or `--view presentation` in the CLI. Cards badge the format,
   smaller screens receive a ≥1024px notice, and the value follows immutable
@@ -17,9 +23,10 @@ Notable changes to dropboard are documented here. The format follows
 
 ### Changed
 
-- The archived collection is now presented as the **Library**, matching its
-  existing project, nested-folder, search, and revision workflows. Internal
-  `archived` status values and `/archive` URLs remain compatible.
+- **Archive** is now a chronological record of completed Inbox work, while the
+  separate **Library** lifecycle state and `/library` route provide project and
+  nested-folder organization for durable references. Existing `archived` items
+  and `/archive` bookmarks remain Archive without migration.
 - Project messaging now leads with dropboard as an open-source inbox and library
   for AI-generated deliverables.
 

@@ -30,7 +30,12 @@ function item(overrides: Partial<ItemMeta> = {}): ItemMeta {
 }
 
 test("card action mode follows the board status", () => {
-  for (const status of ["inbox", "archived", "trash"] as ItemStatus[]) {
+  for (const status of [
+    "inbox",
+    "archived",
+    "library",
+    "trash",
+  ] as ItemStatus[]) {
     assert.equal(artifactCardState(item(), status).actionMode, status);
   }
 });

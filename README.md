@@ -10,12 +10,12 @@ Your coding agent writes a design doc, a comparison table, a research report, or
 You:   "put this on the board"
 Agent: dropboard publish out.html
        --type review --summary …
-You:   review → archive to the library
+You:   review → archive it, or keep it in the library
 ```
 
 ![Inbox on desktop — type seals, prominent unread labels, revision metadata, and a Temporary group with countdowns](docs/screenshots/desktop-inbox.png)
 
-![Archive library on desktop — documents filed by project and nested folder](docs/screenshots/desktop-library.png)
+![Library on desktop — durable references filed by project and nested folder](docs/screenshots/desktop-library.png)
 
 <p align="center">
   <img src="docs/screenshots/shot-inbox.png" width="230" alt="Inbox on mobile" />
@@ -29,20 +29,20 @@ You:   review → archive to the library
 
 1. **Agents publish.** One CLI call (or a REST POST) turns any HTML or Markdown into a board item with a type seal, one-line summary, and project tag. Ready-made skill files make "put this on the board" just work in Claude Code, Codex, or any agent.
 2. **You review.** A mobile-first inbox with unread marks, search, and type filters. Documents reflow on a phone; presentation-format artifacts can declare that they need a larger screen and open fullscreen or in a new tab.
-3. **You keep a library, not a pile.** Archive useful work into projects and nested folders, or trash it with undo. When you just wanted to *see* something, agents publish it as **ephemeral**: it deletes itself in 2 hours unless you tap Keep.
+3. **You separate history from knowledge.** Finished inbox work goes to Archive; books, manuals, and references worth managing go to the project-and-folder Library. Agents can publish durable references directly to Library. Ephemeral items still delete themselves in 2 hours unless you tap Keep.
 
 ## Why the name?
 
-Because that's the whole gesture: your agents **drop** deliverables on a **board**. The inbox holds them until you have looked; the library keeps the ones you want to reference later. The stamp-seal badges tell you at a glance what kind of attention each one needs.
+Because that's the whole gesture: your agents **drop** deliverables on a **board**. The inbox holds them until you have looked, Archive keeps the completed record, and Library holds the references you intentionally want to manage. The stamp-seal badges tell you at a glance what kind of attention each one needs.
 
 ## Why dropboard
 
 - **Agent-agnostic.** Anything that can run a CLI or hit a REST endpoint can publish: Claude Code, Codex, Cursor, aider, your own scripts. Ready-made skill/prompt files are included in [`integrations/`](integrations/).
-- **Built for review and reference, not chat.** An inbox with unread markers and type seals leads into a searchable library with projects, folders, revisions, and stable document identities.
+- **Built for review and reference, not chat.** An inbox with unread markers and type seals leads either to a chronological Archive or a curated Library with projects, folders, revisions, and stable document identities.
 - **Ephemeral when you want it.** `--temp` items expire on their own (default 2h) — "just show me this as HTML" stops polluting your inbox, and one tap keeps the ones worth saving.
 - **Open-source, self-hosted, and private.** Your deliverables never leave your machine. PIN login protects the UI, a bearer token protects publishing, and a restrictive iframe sandbox isolates AI-generated JS.
 - **Zero infrastructure.** No database. Each item is a folder containing `meta.json`, its original HTML/Markdown, and immutable revision files when updated. Backup is `cp -r`, search is `grep`, migration is `mv`. Beyond the web framework, the only content-processing library is a markdown renderer.
-- **Full-fidelity artifacts.** Agents can publish quick Markdown notes, responsive HTML documents, or fixed-aspect presentations. Inline charts, toggles, simulations, keyboard navigation, and fullscreen all work.
+- **Full-fidelity artifacts.** Agents can publish quick Markdown notes, responsive HTML documents, book-sized readers, or fixed-aspect presentations. Inline charts, toggles, simulations, keyboard navigation, and fullscreen all work.
 
 ## Quick start
 
@@ -97,17 +97,21 @@ available for container and reverse-proxy health checks.
 
 ```bash
 dropboard publish <file> [--title T] [--type review|decision|report|info|fun]
-                      [--view document|presentation]
+                      [--view document|presentation|reader]
+                      [--to inbox|library]
                       [--project P] [--folder A/B] [--summary S]
                       [--tags a,b] [--key stable/key] [--note change]
-dropboard update <item-id> <file> [--view document|presentation]
+dropboard update <item-id> <file> [--view document|presentation|reader]
+                      [--to inbox|library]
                       [--note change] [--expected N]
-dropboard list [--status inbox|archived|trash]
+dropboard list [--status inbox|archived|library|trash]
 ```
 
 `.md`/`.markdown` files are rendered with the built-in document template; everything else is served as-is. Titles are auto-derived from `<title>`/`<h1>`/first `#` heading.
 
-The default `--view document` is for responsive, reflowable content and keeps the mobile-first publishing rules. Use `--view presentation` for fixed-aspect decks or other keyboard-driven artifacts. Presentation cards are badged before opening, small screens get a ≥1024px notice, and both private and public viewers offer fullscreen and a direct new-tab view. Existing items need no migration and default to `document`.
+The default `--view document` is for responsive, reflowable content. Use `--view reader` for book-sized, chapter-oriented references and `--view presentation` for fixed-aspect decks or other keyboard-driven artifacts. Reader and presentation cards are badged before opening; presentations additionally get the large-screen notice, fullscreen delegation, and direct new-tab view. Existing items need no migration and default to `document`.
+
+The default destination is `--to inbox`, where the item asks for attention. Use `--to library` only for a finished book, manual, or durable reference that does not need review. A draft book still belongs in Inbox. From Inbox, **Archive** files completed work as history while **Keep in library** promotes a deliberately reusable item. Temporary items cannot be published directly to Library.
 
 **Ephemeral items**: `--temp` publishes a self-destructing item (2h by default, or `--temp 30m` / `--temp 1d`) — perfect for "just show me this as HTML". Temp items sit in a *Temporary* group at the top of the inbox with a countdown; one tap on **Keep** promotes them to a regular item, otherwise they vanish on their own.
 
@@ -116,7 +120,7 @@ Or REST, from anything:
 ```bash
 curl -X POST $URL/api/items \
   -H "Authorization: Bearer $DROPBOARD_TOKEN" -H 'Content-Type: application/json' \
-  -d '{"title":"...","type":"review","view_mode":"presentation","summary":"...","content":"<!doctype html>...","content_type":"html"}'
+  -d '{"title":"...","type":"info","view_mode":"reader","destination":"library","summary":"...","content":"<!doctype html>...","content_type":"html"}'
 ```
 
 `GET /api/items` accepts `status`, `type`, `project`, `q`, `limit` (1–500),
@@ -131,8 +135,9 @@ project/document-slug`. The first keyed publish creates one item; later publishe
 append immutable revisions to that same item instead of filling the inbox with
 lookalike cards.
 
-An update keeps the document's project, folder, and tags, moves it back to the
-inbox, marks it unread, and sorts it by the latest update. Open the **vN** button
+An update keeps the document's project, folder, and tags. By default it moves
+back to the inbox and becomes unread; pass `--to library` when a finished
+reference update should remain outside the attention queue. Open the **vN** button
 to preview any older version or restore it. Restoring never erases history: it
 creates another revision. Existing documents require no migration and are read
 as v1. Updating invalidates previously issued public share links so new content
@@ -144,15 +149,19 @@ instead of silently overwriting a newer update. A document in Trash also returns
 `409 Conflict`; restore it explicitly before updating so agents cannot silently
 undo the user's deletion intent.
 
-### Organizing the library
+### Archive and Library
 
-The top-level **Library** tab is backed by the existing `archived` lifecycle
-state and `/archive` route, so API and bookmark compatibility are preserved.
-Archiving removes an item from the review queue and places it in the library.
-Items without a project or folder appear in **Unfiled**, ready for you to sort
-later. Open an item and use the folder-plus button to edit its project, nested
-folder path, and tags. The library builds its project/folder navigator from this
-metadata; selecting a parent folder includes every descendant.
+The top-level **Archive** is the completed history of the Inbox. It keeps the
+existing `archived` lifecycle state and `/archive` route, so stored items, API
+clients, and bookmarks remain compatible. **Library** is a separate `library`
+state and `/library` route for books, manuals, and references intentionally worth
+organizing and revisiting.
+
+Items without a project or folder appear in Library's **Unfiled** view. Open a
+Library item and use the folder button to edit its project, nested folder path,
+and tags. The Library builds its project/folder navigator from this metadata;
+selecting a parent folder includes every descendant. Archive stays a simpler
+searchable record instead of becoming another filing system.
 
 Organization is logical metadata rather than physical file movement. Item IDs,
 bookmarks, and share links therefore remain stable when folders are renamed.
@@ -180,7 +189,7 @@ The point of dropboard is that you say "put it on the board" and it happens. See
 - `codex/` — symlink the same skill into `~/.codex/skills/`
 - `generic-prompt.md` — paste into any agent's system prompt
 
-Each includes separate quality profiles for responsive documents and fixed-aspect presentations. Both stay self-contained and sandbox-safe; documents remain mobile-first while presentations may explicitly target desktop or tablet viewing.
+Each includes separate quality profiles for responsive documents, book-sized readers, and fixed-aspect presentations, plus routing rules for Inbox versus Library. Every artifact stays self-contained and sandbox-safe.
 
 ## Configuration
 
@@ -242,7 +251,7 @@ Drop it into `%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup`. It launc
 
 ## Sharing an item
 
-Open any item and tap the share icon: it mints a signed public link (`/s/<id>?...`) good for 24 hours, copies it to your clipboard, and shows an option to deactivate it immediately. Anyone with the link can view that one item — no PIN required — but they can't browse your inbox, archive, or trash. Deactivating (or re-sharing, which rotates the link) invalidates every link issued before it, even ones that haven't expired yet.
+Open any item and tap the share icon: it mints a signed public link (`/s/<id>?...`) good for 24 hours, copies it to your clipboard, and shows an option to deactivate it immediately. Anyone with the link can view that one item — no PIN required — but they can't browse your inbox, archive, library, or trash. Deactivating (or re-sharing, which rotates the link) invalidates every link issued before it, even ones that haven't expired yet.
 
 Set `DROPBOARD_PUBLIC_URL` so the copied link is actually reachable by whoever you're sharing with:
 - Same LAN only → your machine's LAN IP, e.g. `http://192.168.1.20:3000` (it's a DHCP address, so re-set this if it changes)

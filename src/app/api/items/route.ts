@@ -9,9 +9,11 @@ import {
   TrashedDocumentError,
 } from "../../../lib/store";
 import {
+  ITEM_DESTINATIONS,
   ITEM_STATUSES,
   ITEM_TYPES,
   ITEM_VIEW_MODES,
+  type ItemDestination,
   type ItemStatus,
   type ItemType,
   type ItemViewMode,
@@ -109,6 +111,7 @@ export async function POST(req: NextRequest) {
   const type = (body.type ?? "info") as ItemType;
   const contentType = (body.content_type ?? "html") as "html" | "markdown";
   const viewMode = (body.view_mode ?? "document") as ItemViewMode;
+  const destination = body.destination as ItemDestination | undefined;
 
   if (!title || title.length > 200) {
     return NextResponse.json(
@@ -143,6 +146,15 @@ export async function POST(req: NextRequest) {
       { status: 400 },
     );
   }
+  if (
+    destination !== undefined &&
+    !ITEM_DESTINATIONS.includes(destination)
+  ) {
+    return NextResponse.json(
+      { error: `destination must be one of: ${ITEM_DESTINATIONS.join(", ")}` },
+      { status: 400 },
+    );
+  }
   const ttl = body.ttl_minutes;
   if (
     ttl !== undefined &&
@@ -150,6 +162,12 @@ export async function POST(req: NextRequest) {
   ) {
     return NextResponse.json(
       { error: "ttl_minutes must be a number between 1 and 10080 (7 days)" },
+      { status: 400 },
+    );
+  }
+  if (destination === "library" && ttl !== undefined) {
+    return NextResponse.json(
+      { error: "destination library cannot be combined with ttl_minutes" },
       { status: 400 },
     );
   }
@@ -280,6 +298,7 @@ export async function POST(req: NextRequest) {
       content,
       content_type: contentType,
       view_mode: body.view_mode !== undefined ? viewMode : undefined,
+      destination,
       project: project || undefined,
       folder: folder || undefined,
       tags:

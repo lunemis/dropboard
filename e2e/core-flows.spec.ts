@@ -99,19 +99,60 @@ async function login(page: Page) {
   await expect(page).toHaveURL(/\/$/);
 }
 
-test("organizes multiple archived documents in one action", async ({
+test("routes completed work to Archive and durable work to Library", async ({
+  page,
+  request,
+}) => {
+  const suffix = Date.now();
+  const reportTitle = `Completed report ${suffix}`;
+  const keepTitle = `Keep reference ${suffix}`;
+  const bookTitle = `Direct library book ${suffix}`;
+  await publish(request, reportTitle);
+  await publish(request, keepTitle);
+  await publish(request, bookTitle, {
+    destination: "library",
+    view_mode: "reader",
+  });
+
+  await login(page);
+  const report = page.locator("li").filter({ hasText: reportTitle });
+  await report.getByRole("button", { name: "Archive", exact: true }).click();
+  const reference = page.locator("li").filter({ hasText: keepTitle });
+  await reference
+    .getByRole("button", { name: "Keep in library", exact: true })
+    .click();
+
+  await page.goto("/archive");
+  await expect(page.getByText(reportTitle)).toBeVisible();
+  await expect(page.getByText(keepTitle)).toHaveCount(0);
+  await expect(page.getByText(bookTitle)).toHaveCount(0);
+
+  await page.goto("/library");
+  await expect(page.getByText(reportTitle)).toHaveCount(0);
+  await expect(page.getByText(keepTitle)).toBeVisible();
+  await expect(page.getByText(bookTitle)).toBeVisible();
+  const book = page.locator("li").filter({ hasText: bookTitle });
+  await expect(book.getByText("Book", { exact: true })).toBeVisible();
+});
+
+test("organizes multiple library documents in one action", async ({
   page,
   request,
 }) => {
   const suffix = Date.now();
   const first = await publish(request, `Bulk first ${suffix}`);
   const second = await publish(request, `Bulk second ${suffix}`);
-  await patchItem(request, first.id, { status: "archived" });
-  await patchItem(request, second.id, { status: "archived" });
+  await patchItem(request, first.id, { status: "library" });
+  await patchItem(request, second.id, { status: "library" });
 
   await login(page);
-  await page.goto("/archive");
-  await expect(page.getByRole("link", { name: "Library" })).toBeVisible();
+  await page.goto("/library");
+  await expect(
+    page.getByRole("link", { name: "Archive", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Library", exact: true }),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Select", exact: true }).click();
   await page.getByLabel(`Select Bulk first ${suffix}`).check();
   await page.getByLabel(`Select Bulk second ${suffix}`).check();

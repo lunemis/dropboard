@@ -15,6 +15,7 @@ const env = {
     "screenshot-session-secret-that-is-at-least-32-characters",
   NEXT_PUBLIC_DROPBOARD_LOCALE: "en",
   DROPBOARD_E2E_PORT: port,
+  DROPBOARD_NEXT_DIST_DIR: ".next-screenshots",
 };
 const npm = process.platform === "win32" ? "npm.cmd" : "npm";
 
@@ -76,13 +77,8 @@ async function publish(input) {
   ).item;
 }
 
-async function archive(input) {
-  const item = await publish(input);
-  await api(`/api/items/${item.id}`, {
-    method: "PATCH",
-    body: JSON.stringify({ status: "archived" }),
-  });
-  return item;
+async function addToLibrary(input) {
+  return publish({ ...input, destination: "library" });
 }
 
 const deliverableHtml = `<!doctype html>
@@ -166,7 +162,7 @@ try {
     content: "# Weekend ideas",
   });
 
-  await archive({
+  await addToLibrary({
     title: "Authentication threat model",
     summary: "PIN, session, bearer token, and public share boundaries.",
     type: "review",
@@ -175,7 +171,7 @@ try {
     folder: "Security",
     tags: ["security"],
   });
-  await archive({
+  await addToLibrary({
     title: "Release checklist",
     summary: "The repeatable path from verified main to a tagged release.",
     type: "info",
@@ -184,7 +180,7 @@ try {
     folder: "Releases",
     tags: ["release"],
   });
-  await archive({
+  await addToLibrary({
     title: "Onboarding usability notes",
     summary: "Where first-time self-hosters hesitate during setup.",
     type: "report",
@@ -193,7 +189,7 @@ try {
     folder: "Research",
     tags: ["onboarding"],
   });
-  await archive({
+  await addToLibrary({
     title: "Competitor workflow scan",
     summary: "How adjacent tools move AI output from chat into durable work.",
     type: "report",
@@ -202,7 +198,7 @@ try {
     folder: "Competitors",
     tags: ["research"],
   });
-  await archive({
+  await addToLibrary({
     title: "Prompt publishing playbook",
     summary: "Reusable patterns for deciding when an artifact should update.",
     type: "info",
@@ -210,6 +206,7 @@ try {
     project: "Agent ops",
     folder: "Playbooks",
     tags: ["agents"],
+    view_mode: "reader",
   });
   await api(`/api/items/${versioned.id}`, {
     method: "PATCH",
@@ -217,6 +214,7 @@ try {
   });
 
   await page.getByLabel("PIN").fill("123456");
+  await page.getByLabel("PIN").press("Enter");
   await page.waitForURL(`${baseURL}/`);
   await page
     .locator("li")
@@ -236,7 +234,7 @@ try {
     path: path.join(root, "docs/screenshots/desktop-inbox.png"),
   });
 
-  await page.goto(`${baseURL}/archive`);
+  await page.goto(`${baseURL}/library`);
   await page
     .locator("li")
     .filter({ hasText: "Authentication threat model" })
