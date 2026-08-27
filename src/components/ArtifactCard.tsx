@@ -51,6 +51,7 @@ export function ArtifactCard({
               ? "artifact-card--unread"
               : "border-[var(--line)]"
         }`}
+        data-slot="card"
       >
         {status === "library" && selecting && (
           <label className="flex shrink-0 items-center px-1">

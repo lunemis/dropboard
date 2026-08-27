@@ -1,10 +1,11 @@
 "use client";
 
-import { useId, useRef, useState } from "react";
-import { useDialogFocus } from "../lib/useDialogFocus";
+import { FolderPlus } from "lucide-react";
+import { useId, useState } from "react";
 import { t } from "../lib/i18n";
 import type { ItemMeta } from "../lib/types";
 import { useOrganizationSuggestions } from "../lib/useOrganizationSuggestions";
+import { DialogSurface } from "./ui/DialogSurface";
 
 export interface OrganizationValues {
   project: string;
@@ -28,9 +29,6 @@ export function OrganizerDialog({
   const [saving, setSaving] = useState(false);
   const suggestions = useOrganizationSuggestions();
   const suggestionId = useId().replaceAll(":", "");
-  const dialogRef = useRef<HTMLElement>(null);
-  useDialogFocus({ containerRef: dialogRef, onClose, disabled: saving });
-
   const addPendingTag = () => {
     const next = tagInput.trim().replace(/^#/, "");
     if (next && !tags.includes(next) && tags.length < 20) {
@@ -52,45 +50,14 @@ export function OrganizerDialog({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-30 flex items-end justify-center bg-[rgb(12_16_22_/_0.42)] p-0 backdrop-blur-[2px] sm:items-center sm:p-5"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="organize-title"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget && !saving) onClose();
-      }}
+    <DialogSurface
+      description={t.organizeHint}
+      disabled={saving}
+      eyebrow={t.organize}
+      onClose={onClose}
+      title={t.organizeItem}
     >
-      <section
-        ref={dialogRef}
-        tabIndex={-1}
-        className="w-full max-w-lg rounded-t-3xl border border-[var(--line)] bg-[var(--surface)] p-5 shadow-[var(--shadow-md)] outline-none sm:rounded-3xl sm:p-6"
-      >
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="font-mono text-[10px] font-semibold tracking-[0.12em] text-[var(--accent)] uppercase">
-              {t.organize}
-            </p>
-            <h2
-              id="organize-title"
-              className="mt-1 text-xl font-bold tracking-[-0.025em]"
-            >
-              {t.organizeItem}
-            </h2>
-            <p className="mt-1 text-xs leading-relaxed text-[var(--muted)]">
-              {t.organizeHint}
-            </p>
-          </div>
-          <button
-            type="button"
-            aria-label={t.cancel}
-            onClick={onClose}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xl text-[var(--muted)] hover:bg-[var(--surface-2)]"
-          >
-            ×
-          </button>
-        </div>
-
+      <div className="ui-dialog-body">
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
           <OrganizerField label={t.project}>
             <input
@@ -189,12 +156,13 @@ export function OrganizerDialog({
             onClick={save}
             disabled={saving}
             className="rounded-xl bg-[var(--ink)] px-4 py-2.5 text-sm font-semibold text-[var(--bg)] shadow-sm active:scale-95 disabled:opacity-50"
+            data-slot="button"
           >
             {saving ? t.saving : t.saveChanges}
           </button>
         </div>
-      </section>
-    </div>
+      </div>
+    </DialogSurface>
   );
 }
 
@@ -214,20 +182,5 @@ function OrganizerField({
 }
 
 export function FolderIcon() {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H10l2 2h6.5A2.5 2.5 0 0 1 21 9.5v7A2.5 2.5 0 0 1 18.5 19h-13A2.5 2.5 0 0 1 3 16.5Z" />
-      <path d="M8 13h8M12 9v8" />
-    </svg>
-  );
+  return <FolderPlus aria-hidden="true" size={18} strokeWidth={1.8} />;
 }

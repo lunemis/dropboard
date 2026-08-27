@@ -145,6 +145,7 @@ test("organizes multiple library documents in one action", async ({
   await patchItem(request, first.id, { status: "library" });
   await patchItem(request, second.id, { status: "library" });
 
+  await page.setViewportSize({ width: 390, height: 844 });
   await login(page);
   await page.goto("/library");
   await expect(
@@ -161,6 +162,20 @@ test("organizes multiple library documents in one action", async ({
     .click();
 
   const dialog = page.getByRole("dialog", { name: "Move documents" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByLabel("Project")).toBeFocused();
+  const dialogBox = await dialog.boundingBox();
+  expect(dialogBox?.x).toBe(0);
+  expect(dialogBox?.width).toBe(390);
+  const viewportHeight = await page.evaluate(() => window.innerHeight);
+  await expect
+    .poll(async () => {
+      const settledBox = await dialog.boundingBox();
+      return Math.round(
+        (settledBox?.y ?? 0) + (settledBox?.height ?? 0),
+      );
+    })
+    .toBe(viewportHeight);
   await dialog.getByLabel("Project").fill("E2E Project");
   await dialog.getByLabel("Folder").fill("Research / Browser");
   await dialog
