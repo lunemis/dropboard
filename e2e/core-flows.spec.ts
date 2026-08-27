@@ -149,6 +149,16 @@ test("organizes multiple library documents in one action", async ({
   await login(page);
   await page.goto("/library");
   await expect(
+    page
+      .locator('[data-slot="page-intro"]')
+      .getByRole("heading", { name: "Library", exact: true, level: 2 }),
+  ).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
+  await expect(
     page.getByRole("link", { name: "Archive", exact: true }),
   ).toBeVisible();
   await expect(

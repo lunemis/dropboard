@@ -6,6 +6,13 @@ export const LOCALE: Locale =
 const STRINGS = {
   en: {
     brandTagline: "Open-source inbox and library for AI deliverables",
+    workspace: "Workspace",
+    inboxBoardHint: "Review new deliverables and decide what should stay.",
+    archiveBoardHint: "A chronological record of completed deliverables.",
+    libraryBoardHint: "Long-term references organized by project and folder.",
+    trashBoardHint: "Recover recent removals or delete them permanently.",
+    itemsLabel: "Items",
+    visibleLabel: "Visible",
     inbox: "Inbox",
     archive: "Archive",
     trash: "Trash",
@@ -136,6 +143,13 @@ const STRINGS = {
   },
   ko: {
     brandTagline: "AI 산출물을 위한 오픈소스 받은함과 라이브러리",
+    workspace: "작업 공간",
+    inboxBoardHint: "새 산출물을 검토하고 남길 것을 결정합니다.",
+    archiveBoardHint: "완료한 산출물을 시간순으로 확인합니다.",
+    libraryBoardHint: "장기 참고자료를 프로젝트와 폴더별로 관리합니다.",
+    trashBoardHint: "최근 삭제 항목을 복원하거나 영구 삭제합니다.",
+    itemsLabel: "문서",
+    visibleLabel: "현재 표시",
     inbox: "받은함",
     archive: "아카이브",
     trash: "휴지통",

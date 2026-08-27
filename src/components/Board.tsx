@@ -300,6 +300,13 @@ export default function Board({ status }: { status: ItemStatus }) {
   const regular = visible?.filter((i) => !i.expires_at) ?? [];
   const unreadCount =
     status === "inbox" ? (items?.filter((i) => !i.read_at).length ?? 0) : 0;
+  const activeTab = TABS.find((tab) => tab.status === status) ?? TABS[0];
+  const boardHint = {
+    archived: t.archiveBoardHint,
+    inbox: t.inboxBoardHint,
+    library: t.libraryBoardHint,
+    trash: t.trashBoardHint,
+  }[status];
   const categoryById = Object.fromEntries(
     categories.map((category) => [category.id, category]),
   ) as Record<ItemType, CategoryPreference>;
@@ -342,6 +349,7 @@ export default function Board({ status }: { status: ItemStatus }) {
   return (
     <div
       className="board-layout mx-auto flex w-full flex-1 flex-col"
+      data-design="control-suite"
       data-slot="app-shell"
       style={{ maxWidth: WIDTH_PX[boardWidth] }}
     >
@@ -404,7 +412,7 @@ export default function Board({ status }: { status: ItemStatus }) {
                 href={tab.href}
                 className={`rounded-lg px-3 py-1.5 transition-colors ${
                   tab.status === status
-                    ? "bg-[var(--surface-2)] font-semibold text-[var(--ink)]"
+                    ? "bg-[var(--accent)] font-semibold text-white shadow-sm"
                     : "text-[var(--muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--ink)]"
                 }`}
               >
@@ -414,6 +422,27 @@ export default function Board({ status }: { status: ItemStatus }) {
           </nav>
         </div>
       </header>
+
+      <section
+        className="board-intro mx-3 mt-4 sm:mx-5 sm:mt-5"
+        data-slot="page-intro"
+      >
+        <div className="board-intro__copy">
+          <p>{t.workspace}</p>
+          <h2>{activeTab.label}</h2>
+          <span>{boardHint}</span>
+        </div>
+        <dl className="board-intro__stats">
+          <div>
+            <dt>{t.itemsLabel}</dt>
+            <dd>{items?.length ?? "—"}</dd>
+          </div>
+          <div>
+            <dt>{t.visibleLabel}</dt>
+            <dd>{visible?.length ?? "—"}</dd>
+          </div>
+        </dl>
+      </section>
 
       {status === "library" && items !== null && items.length > 0 && (
         <LibraryNavigator
@@ -579,12 +608,13 @@ function FilterChip({
 }) {
   return (
     <button
+      aria-pressed={active}
       onClick={onClick}
       data-slot="button"
       data-variant="filter"
       className={`shrink-0 rounded-lg border px-3 py-1.5 text-[12px] transition-colors ${
         active
-          ? "border-[var(--ink)] bg-[var(--ink)] font-semibold text-[var(--bg)]"
+          ? "border-[var(--accent)] bg-[var(--accent)] font-semibold text-white shadow-sm"
           : "border-[var(--line)] bg-[var(--surface)] text-[var(--muted)] hover:border-[var(--line-strong)] hover:text-[var(--ink)]"
       }`}
     >
