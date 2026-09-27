@@ -1,7 +1,7 @@
 import path from "node:path";
 import { defineConfig, devices } from "@playwright/test";
 
-const port = 3015;
+const port = Number(process.env.DROPBOARD_E2E_PORT ?? "3414");
 const baseURL = `http://127.0.0.1:${port}`;
 
 export default defineConfig({

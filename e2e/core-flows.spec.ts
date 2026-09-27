@@ -28,6 +28,50 @@ async function publish(
   return (await response.json()).item as { id: string };
 }
 
+for (const width of [1280, 390]) {
+  test(`opens stored artifact links outside the sandbox at ${width}px`, async ({ page, request }) => {
+    const destination = "https://assets.example.test/?work=one&view=review";
+    await page.context().route("https://assets.example.test/**", route => route.fulfill({
+      contentType: "text/html", headers: { "Content-Security-Policy": "frame-ancestors 'none'" },
+      body: "<h1>Asset detail</h1><p>Original media</p>",
+    }));
+    const item = await publish(request, "Asset links", { content_type: "html", content: `<!doctype html>
+      <a href="#contents">Contents</a><a href="${destination.replaceAll("&", "&amp;")}">Details and assets</a>
+      <h2 id="contents">Document contents</h2>` });
+    await login(page);
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto(`/i/${item.id}`);
+    const frame = page.frameLocator("iframe");
+    await frame.getByRole("link", { name: "Contents", exact: true }).click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    const child = page.frames().find(f => f !== page.mainFrame())!;
+    await child.evaluate(() => parent.postMessage({ type: "dropboard:link", document: "old", index: 0, href: "https://evil.example" }, "*"));
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    const catalog = await (await request.get(`/api/items/${item.id}/raw?view=links`, { headers: AUTHORIZATION })).json();
+    await page.evaluate(c => window.postMessage({ type: "dropboard:link", document: c.document, index: 0 }, "*"), catalog);
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    const detail = frame.getByRole("link", { name: "Details and assets" });
+    if (width === 1280) await detail.press("Enter"); else await detail.click();
+    const dialog = page.getByRole("dialog", { name: "Document link" });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByText(destination)).toBeVisible();
+    const open = dialog.getByRole("link", { name: "Open in new tab" });
+    await expect(open).toHaveAttribute("rel", "noopener noreferrer");
+    const popupPromise = page.waitForEvent("popup");
+    if (width === 1280) await open.press("Enter"); else await open.click();
+    const popup = await popupPromise;
+    await expect(popup).toHaveURL(destination);
+    await expect(popup.getByRole("heading", { name: "Asset detail" })).toBeVisible();
+    expect(await popup.evaluate(() => window.opener === null)).toBe(true);
+    await popup.close();
+    await page.keyboard.press("Escape");
+    await expect(dialog).toHaveCount(0);
+    await expect(frame.getByRole("heading", { name: "Document contents" })).toBeVisible();
+    await expect(page.locator("iframe")).toHaveAttribute("sandbox", "allow-scripts");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  });
+}
+
 test("presents wide artifacts with clear viewport and fullscreen affordances", async ({
   page,
   request,
@@ -145,6 +189,7 @@ test("organizes multiple library documents in one action", async ({
   await patchItem(request, first.id, { status: "library" });
   await patchItem(request, second.id, { status: "library" });
 
+  await page.setViewportSize({ width: 390, height: 844 });
   await login(page);
   await page.goto("/library");
   await expect(
@@ -161,6 +206,20 @@ test("organizes multiple library documents in one action", async ({
     .click();
 
   const dialog = page.getByRole("dialog", { name: "Move documents" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByLabel("Project")).toBeFocused();
+  const dialogBox = await dialog.boundingBox();
+  expect(dialogBox?.x).toBe(0);
+  expect(dialogBox?.width).toBe(390);
+  const viewportHeight = await page.evaluate(() => window.innerHeight);
+  await expect
+    .poll(async () => {
+      const settledBox = await dialog.boundingBox();
+      return Math.round(
+        (settledBox?.y ?? 0) + (settledBox?.height ?? 0),
+      );
+    })
+    .toBe(viewportHeight);
   await dialog.getByLabel("Project").fill("E2E Project");
   await dialog.getByLabel("Folder").fill("Research / Browser");
   await dialog

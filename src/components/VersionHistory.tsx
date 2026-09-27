@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { History } from "lucide-react";
+import { useEffect, useState } from "react";
 import { relTime, t } from "../lib/i18n";
 import type { ItemMeta, RevisionMeta } from "../lib/types";
-import { useDialogFocus } from "../lib/useDialogFocus";
+import { DialogSurface } from "./ui/DialogSurface";
 
 export interface RevisionWithUrl extends RevisionMeta {
   raw_url: string;
@@ -26,13 +27,6 @@ export function VersionHistory({
   const [loadFailed, setLoadFailed] = useState(false);
   const [restoring, setRestoring] = useState<number | null>(null);
   const [confirming, setConfirming] = useState<number | null>(null);
-  const dialogRef = useRef<HTMLElement>(null);
-  useDialogFocus({
-    containerRef: dialogRef,
-    onClose,
-    disabled: restoring !== null,
-  });
-
   useEffect(() => {
     let cancelled = false;
     fetch(`/api/items/${item.id}/revisions`, { cache: "no-store" })
@@ -72,48 +66,16 @@ export function VersionHistory({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-30 flex justify-end bg-[rgb(12_16_22_/_0.38)] backdrop-blur-[2px]"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="version-history-title"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget && restoring === null)
-          onClose();
-      }}
+    <DialogSurface
+      description={t.versionHistoryHint}
+      disabled={restoring !== null}
+      eyebrow={`v${item.revision}`}
+      onClose={onClose}
+      title={t.versionHistory}
+      tone="violet"
+      variant="sheet"
     >
-      <aside
-        ref={dialogRef}
-        tabIndex={-1}
-        className="flex h-full w-full max-w-md flex-col border-l border-[var(--line)] bg-[var(--surface)] shadow-[var(--shadow-md)] outline-none"
-      >
-        <div className="flex items-start justify-between gap-4 border-b border-[var(--line)] p-5 sm:p-6">
-          <div>
-            <p className="font-mono text-[10px] font-semibold tracking-[0.12em] text-[var(--violet)] uppercase">
-              v{item.revision}
-            </p>
-            <h2
-              id="version-history-title"
-              className="mt-1 text-xl font-bold tracking-[-0.025em]"
-            >
-              {t.versionHistory}
-            </h2>
-            <p className="mt-1 text-xs leading-relaxed text-[var(--muted)]">
-              {t.versionHistoryHint}
-            </p>
-          </div>
-          <button
-            data-dialog-autofocus
-            type="button"
-            aria-label={t.cancel}
-            onClick={onClose}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xl text-[var(--muted)] hover:bg-[var(--surface-2)]"
-          >
-            ×
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-3 sm:p-4">
+      <div className="ui-dialog-scroll-body">
           {loadFailed ? (
             <p className="py-12 text-center text-sm text-[var(--accent)]">
               {t.versionLoadFailed}
@@ -183,27 +145,11 @@ export function VersionHistory({
               })}
             </ol>
           )}
-        </div>
-      </aside>
-    </div>
+      </div>
+    </DialogSurface>
   );
 }
 
 export function HistoryIcon() {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
-      <path d="M3 3v5h5M12 7v5l3 2" />
-    </svg>
-  );
+  return <History aria-hidden="true" size={18} strokeWidth={1.8} />;
 }

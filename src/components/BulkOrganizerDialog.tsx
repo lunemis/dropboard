@@ -1,9 +1,9 @@
 "use client";
 
-import { useId, useRef, useState } from "react";
+import { useId, useState } from "react";
 import { t } from "../lib/i18n";
-import { useDialogFocus } from "../lib/useDialogFocus";
 import { useOrganizationSuggestions } from "../lib/useOrganizationSuggestions";
+import { DialogSurface } from "./ui/DialogSurface";
 
 export interface BulkOrganizationValues {
   project: string;
@@ -24,9 +24,6 @@ export function BulkOrganizerDialog({
   const [saving, setSaving] = useState(false);
   const suggestions = useOrganizationSuggestions();
   const suggestionId = useId().replaceAll(":", "");
-  const dialogRef = useRef<HTMLElement>(null);
-  useDialogFocus({ containerRef: dialogRef, onClose, disabled: saving });
-
   async function save() {
     setSaving(true);
     const saved = await onSave({ project, folder });
@@ -35,45 +32,14 @@ export function BulkOrganizerDialog({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-30 flex items-end justify-center bg-[rgb(12_16_22_/_0.42)] backdrop-blur-[2px] sm:items-center sm:p-5"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="bulk-organize-title"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget && !saving) onClose();
-      }}
+    <DialogSurface
+      description={t.bulkOrganizeHint}
+      disabled={saving}
+      eyebrow={t.selected(count)}
+      onClose={onClose}
+      title={t.bulkOrganize}
     >
-      <section
-        ref={dialogRef}
-        tabIndex={-1}
-        className="w-full max-w-lg rounded-t-3xl border border-[var(--line)] bg-[var(--surface)] p-5 shadow-[var(--shadow-md)] outline-none sm:rounded-3xl sm:p-6"
-      >
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="font-mono text-[10px] font-semibold tracking-[0.12em] text-[var(--accent)] uppercase">
-              {t.selected(count)}
-            </p>
-            <h2
-              id="bulk-organize-title"
-              className="mt-1 text-xl font-bold tracking-[-0.025em]"
-            >
-              {t.bulkOrganize}
-            </h2>
-            <p className="mt-1 text-xs leading-relaxed text-[var(--muted)]">
-              {t.bulkOrganizeHint}
-            </p>
-          </div>
-          <button
-            type="button"
-            aria-label={t.cancel}
-            onClick={onClose}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xl text-[var(--muted)] hover:bg-[var(--surface-2)]"
-          >
-            ×
-          </button>
-        </div>
-
+      <div className="ui-dialog-body">
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
           <label className="text-xs font-semibold text-[var(--muted)]">
             {t.project}
@@ -126,11 +92,12 @@ export function BulkOrganizerDialog({
             onClick={save}
             disabled={saving}
             className="rounded-xl bg-[var(--ink)] px-4 py-2.5 text-sm font-semibold text-[var(--bg)] shadow-sm active:scale-95 disabled:opacity-50"
+            data-slot="button"
           >
             {saving ? t.saving : t.moveSelected}
           </button>
         </div>
-      </section>
-    </div>
+      </div>
+    </DialogSurface>
   );
 }

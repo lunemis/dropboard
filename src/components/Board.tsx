@@ -1,5 +1,6 @@
 "use client";
 
+import { Search, Settings } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -341,9 +342,10 @@ export default function Board({ status }: { status: ItemStatus }) {
   return (
     <div
       className="board-layout mx-auto flex w-full flex-1 flex-col"
+      data-slot="app-shell"
       style={{ maxWidth: WIDTH_PX[boardWidth] }}
     >
-      <header className="sticky top-0 z-10 px-3 pt-3 sm:px-5 sm:pt-5">
+      <header className="sticky top-0 z-10 px-3 pt-3 sm:px-5 sm:pt-5" data-slot="topbar">
         <div className="board-chrome overflow-hidden rounded-2xl border border-[var(--line)]">
           <div className="flex items-center justify-between gap-4 px-4 py-3.5 sm:px-5">
             <div className="min-w-0">
@@ -364,9 +366,10 @@ export default function Board({ status }: { status: ItemStatus }) {
                 href="/settings/categories"
                 aria-label={t.categorySettings}
                 title={t.categorySettings}
+                data-slot="icon-button"
                 className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--ink)]"
               >
-                <SettingsIcon />
+                <Settings aria-hidden="true" size={17} strokeWidth={1.8} />
               </Link>
               <div
                 className="width-control hidden items-center gap-0.5 rounded-full border border-[var(--line)] p-0.5 sm:flex"
@@ -394,7 +397,7 @@ export default function Board({ status }: { status: ItemStatus }) {
               </div>
             </div>
           </div>
-          <nav className="flex gap-1 border-t border-[var(--line)] px-2 py-1.5 text-sm sm:px-3">
+          <nav className="flex gap-1 border-t border-[var(--line)] px-2 py-1.5 text-sm sm:px-3" data-slot="navigation">
             {TABS.map((tab) => (
               <Link
                 key={tab.href}
@@ -427,19 +430,12 @@ export default function Board({ status }: { status: ItemStatus }) {
       {items !== null && items.length > 0 && (
         <div className="mx-3 mt-3 flex flex-col gap-2.5 rounded-2xl border border-[var(--line)] bg-[var(--surface-muted)] p-3 sm:mx-5 sm:mt-4 sm:p-4">
           <div className="relative">
-            <svg
+            <Search
+              aria-hidden="true"
               className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-[var(--muted)]"
-              width="15"
-              height="15"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-            >
-              <circle cx="11" cy="11" r="7" />
-              <path d="m21 21-4.3-4.3" />
-            </svg>
+              size={15}
+              strokeWidth={2}
+            />
             <input
               type="search"
               value={query}
@@ -447,6 +443,7 @@ export default function Board({ status }: { status: ItemStatus }) {
               placeholder={t.search}
               aria-label={t.search}
               className="search-field h-11 w-full rounded-xl border border-[var(--line)] bg-[var(--surface)] pr-4 pl-10 text-sm outline-none placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:ring-3 focus:ring-[var(--accent-ring)]"
+              data-slot="input"
             />
           </div>
           <div className="scrollbar-none flex gap-2 overflow-x-auto">
@@ -504,8 +501,8 @@ export default function Board({ status }: { status: ItemStatus }) {
       </main>
 
       {toast && (
-        <div className="toast-in fixed inset-x-0 bottom-6 z-20 flex justify-center px-4">
-          <div className="flex items-center gap-4 rounded-full bg-[var(--ink)] px-5 py-3 text-sm text-[var(--bg)] shadow-lg">
+        <div aria-live="polite" className="toast-in fixed inset-x-0 bottom-6 z-20 flex justify-center px-4">
+          <div className="flex items-center gap-4 rounded-full bg-[var(--ink)] px-5 py-3 text-sm text-[var(--bg)] shadow-lg" data-slot="toast" role="status">
             <span>{toast.msg}</span>
             {toast.undo && (
               <button
@@ -583,6 +580,8 @@ function FilterChip({
   return (
     <button
       onClick={onClick}
+      data-slot="button"
+      data-variant="filter"
       className={`shrink-0 rounded-lg border px-3 py-1.5 text-[12px] transition-colors ${
         active
           ? "border-[var(--ink)] bg-[var(--ink)] font-semibold text-[var(--bg)]"
@@ -601,25 +600,6 @@ function FilterChip({
   );
 }
 
-function SettingsIcon() {
-  return (
-    <svg
-      width="17"
-      height="17"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <circle cx="12" cy="12" r="3" />
-      <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1a1.7 1.7 0 0 0 1.9.3A1.7 1.7 0 0 0 10 3v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z" />
-    </svg>
-  );
-}
-
 function EmptyState({
   status,
   filtered,
@@ -629,14 +609,14 @@ function EmptyState({
 }) {
   if (filtered) {
     return (
-      <p className="empty-panel my-4 rounded-2xl border border-dashed border-[var(--line-strong)] py-16 text-center text-sm text-[var(--muted)]">
+      <p className="empty-panel my-4 rounded-2xl border border-dashed border-[var(--line-strong)] py-16 text-center text-sm text-[var(--muted)]" data-slot="empty-state">
         {t.noMatches}
       </p>
     );
   }
   if (status === "inbox") {
     return (
-      <div className="empty-panel my-4 flex flex-col items-center rounded-2xl border border-dashed border-[var(--line-strong)] py-20">
+      <div className="empty-panel my-4 flex flex-col items-center rounded-2xl border border-dashed border-[var(--line-strong)] py-20" data-slot="empty-state">
         <div className="-rotate-4 rounded-lg border-2 border-[var(--accent)] bg-[var(--accent-soft)] px-4 py-1.5 font-mono text-xl font-bold text-[var(--accent)]">
           {t.stamp}
         </div>
@@ -646,7 +626,7 @@ function EmptyState({
     );
   }
   return (
-    <div className="empty-panel my-4 rounded-2xl border border-dashed border-[var(--line-strong)] py-20 text-center">
+    <div className="empty-panel my-4 rounded-2xl border border-dashed border-[var(--line-strong)] py-20 text-center" data-slot="empty-state">
       <p className="text-sm text-[var(--muted)]">
         {status === "archived"
           ? t.emptyArchive
