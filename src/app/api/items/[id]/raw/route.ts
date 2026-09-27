@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { marked } from "marked";
+import { artifactLinkDocument } from "../../../../../lib/artifact-link-document";
 import { isUnsafeNoAuthEnabled } from "../../../../../lib/config";
 import {
   SESSION_COOKIE,
@@ -173,7 +174,15 @@ export async function GET(req: NextRequest, ctx: Ctx) {
         )
       : content;
 
-  return new Response(html, {
+  const view = req.nextUrl.searchParams.get("view");
+  const document = view === "links" || view === "frame" ? artifactLinkDocument(html) : null;
+  if (view === "links") {
+    return Response.json(document!.catalog, { headers: {
+      "Cache-Control": "private, no-store",
+      "X-Content-Type-Options": "nosniff",
+    } });
+  }
+  return new Response(document?.frameHtml ?? html, {
     headers: {
       "Content-Type": "text/html; charset=utf-8",
       // Defense in depth: isolate scripts and prevent generated artifacts from

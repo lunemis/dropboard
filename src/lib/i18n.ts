@@ -65,6 +65,8 @@ const STRINGS = {
     presentationNoticeHint:
       "Best viewed at 1024px or wider. Open it in a new tab on a desktop or continue here if you prefer.",
     openNewTab: "Open in new tab",
+    documentLink: "Document link",
+    documentLinkFailed: "Couldn't open this link. Reload the document and try again.",
     openAnyway: "Open anyway",
     actionShare: "Share",
     toastShareCopied: "Share link copied — valid for 24h",
@@ -197,6 +199,8 @@ const STRINGS = {
     presentationNoticeHint:
       "1024px 이상의 화면을 권장합니다. 데스크톱에서 새 탭으로 열거나 여기에서 계속 볼 수 있습니다.",
     openNewTab: "새 탭에서 열기",
+    documentLink: "문서 링크",
+    documentLinkFailed: "링크를 열지 못했습니다. 문서를 새로고침한 뒤 다시 눌러 주세요.",
     openAnyway: "그래도 열기",
     actionShare: "공유",
     toastShareCopied: "공유 링크를 복사했습니다 — 24시간 동안 유효",
